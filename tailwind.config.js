@@ -13,7 +13,7 @@ module.exports = {
         'primary': '#d65032',
         'orange-mge':'#ff3d08',
         'secondary':'#181818',
-        'dark':'#1f2020',
+        'dark':'#000000',
         'dark-gray':'#5E656D',
 
       },

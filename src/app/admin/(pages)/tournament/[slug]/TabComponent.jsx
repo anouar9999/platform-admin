@@ -15,6 +15,7 @@ import ParticipantList from '@/app/admin/components/widgets/cards/ParticipantLis
 import TournamentBracket from '../../../TournamentBracket';
 import DoubleEliminationBracket from '@/app/admin/DoubleElminationBracket';
 import InfoCard from './InfoCard';
+import BattleRoyale from '@/app/admin/components/brackets/BattleRoyal';
 
 const TabComponent = ({ activeTab, onTabChange, tournament,gameData }) => {
   const tabs = ['Overview', 'Waiting List', 'Participants', 'Bracket'];
@@ -164,7 +165,7 @@ const TabComponent = ({ activeTab, onTabChange, tournament,gameData }) => {
       case 'Participants':
         return <ParticipantList tournamentId={tournament.id} />;
       case 'Bracket':
-        return <TournamentBracket tournamentId={tournament.id}
+        return <BattleRoyale tournamentId={tournament.id}
        
       />;
       default:

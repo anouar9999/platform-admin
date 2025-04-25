@@ -14,160 +14,7 @@ import CustomDropdown from './CustomDropdown';
 import { Dialog } from '@headlessui/react';
 
 // Score Input Dialog Component
-const ScoreboardUpdater = ({ isOpen, closeDialog, onSave, teamA, teamB }) => {
-  const [scores, setScores] = useState({ A: 0, B: 0 });
-  const [winner, setWinner] = useState(null);
-  const [animation, setAnimation] = useState({ team: null, direction: null });
 
-  useEffect(() => {
-    if (scores.A > scores.B) setWinner('A');
-    else if (scores.B > scores.A) setWinner('B');
-    else setWinner(null);
-  }, [scores]);
-
-  const updateScore = (team, increment) => {
-    const newScore = Math.max(0, scores[team] + increment);
-    setScores((prev) => ({ ...prev, [team]: newScore }));
-
-    // Trigger animation
-    setAnimation({ team, direction: increment > 0 ? 'up' : 'down' });
-    setTimeout(() => setAnimation({ team: null, direction: null }), 500);
-  };
-
-  const handleSave = () => {
-    onSave(scores.A, scores.B);
-    closeDialog();
-  };
-
-  return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          className="fixed inset-0 flex items-center justify-center z-50 p-4"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-        >
-          <motion.div
-            className="fixed inset-0 bg-black/75 backdrop-blur-md"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={closeDialog}
-          />
-
-          <motion.div
-            className="relative max-w-3xl w-full bg-gray-900 border-2 border-gray-700 p-6 rounded-xl shadow-2xl overflow-hidden"
-            initial={{ y: 50, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 50, opacity: 0 }}
-          >
-            {/* Background elements */}
-            <div className="absolute inset-0 overflow-hidden opacity-10">
-              <div className="absolute -left-10 -top-20 w-64 h-64 bg-primary rounded-full blur-3xl"></div>
-              <div className="absolute -right-10 -bottom-20 w-64 h-64 bg-blue-500 rounded-full blur-3xl"></div>
-            </div>
-
-            {/* Close button */}
-            <button
-              onClick={closeDialog}
-              className="absolute top-4 right-4 text-gray-400 hover:text-white"
-            >
-              <X size={24} />
-            </button>
-
-            <h2 className="text-3xl font-custom tracking-wider text-white text-center mb-6">
-              MATCH SCOREBOARD
-            </h2>
-
-            <div className="flex justify-between items-center mb-8">
-              {/* Center scoreboard */}
-              <div className="flex items-center justify-center space-x-4 w-full">
-                {[
-                  { team: 'A', data: teamA },
-                  { team: 'B', data: teamB },
-                ].map(({ team, data }) => (
-                  <div key={team} className="flex flex-col items-center w-1/2">
-                    <div className="relative mb-2">
-                      <motion.div
-                        className={`p-3 rounded-xl ${
-                          winner === team ? 'ring-2 ring-yellow-400' : ''
-                        }`}
-                        animate={winner === team ? { scale: [1, 1.05, 1] } : {}}
-                        transition={{ repeat: Infinity, duration: 2 }}
-                      >
-                        <img
-                          src={data.logo}
-                          alt={data.name}
-                          className="w-24 h-24 object-contain rounded-lg"
-                        />
-                        <AnimatePresence>
-                          {winner === team && (
-                            <motion.div
-                              className="absolute -top-3 -right-3 bg-yellow-500 rounded-full p-1"
-                              initial={{ scale: 0 }}
-                              animate={{ scale: 1, rotate: [0, 10, -10, 0] }}
-                              transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 1.5 }}
-                            >
-                              <Trophy size={20} className="text-gray-900" />
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </motion.div>
-                    </div>
-
-                    <p className="text-gray-300 font-mono text-sm mb-1">TEAM {team}</p>
-                    <p className="font-custom text-xl text-white mb-6">{data.name}</p>
-
-                    {/* Score controls */}
-                    <div className="flex items-center">
-                      <div className="relative w-24 h-20 flex items-center justify-center bg-gray-800 border-t-2 border-b-2 border-gray-700">
-                        <AnimatePresence>
-                          {animation.team === team && (
-                            <motion.span
-                              className={`absolute text-3xl font-bold ${
-                                animation.direction === 'up' ? 'text-green-400' : 'text-red-400'
-                              }`}
-                              initial={{ opacity: 1, y: animation.direction === 'up' ? 20 : -20 }}
-                              animate={{ opacity: 0, y: animation.direction === 'up' ? -20 : 20 }}
-                              exit={{ opacity: 0 }}
-                            >
-                              {animation.direction === 'up' ? '+1' : '-1'}
-                            </motion.span>
-                          )}
-                        </AnimatePresence>
-                        <span className="text-5xl font-bold text-white">{scores[team]}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* VS divider */}
-            <div className="flex items-center justify-center mb-8">
-              <div className="h-px w-1/3 bg-gray-700"></div>
-              <div className="px-4 text-xl font-bold text-gray-500">VS</div>
-              <div className="h-px w-1/3 bg-gray-700"></div>
-            </div>
-
-            {/* Save button */}
-            <div className="flex justify-center">
-              <motion.button
-                onClick={handleSave}
-                className="px-8 py-3 bg-primary text-white font-semibold rounded-md hover:bg-orange-600 transition duration-300"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                CONFIRM FINAL SCORE
-              </motion.button>
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
-};
 
 // Improved Modal component for showing matches in a group with filtering options
 const GroupModal = ({
@@ -302,7 +149,7 @@ console.log()
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-75">
-      <div className="w-full max-w-7xl h-[90vh] overflow-hidden bg-dark shadow-xl angular-cut">
+      <div className="w-full max-w-7xl h-[90vh] overflow-hidden bg-secondary shadow-xl angular-cut">
         {/* Modal Header */}
         <div className="px-6 py-4 border-b border-secondary flex justify-between items-center">
           <h2 className="text-2xl font-custom tracking-widest text-primary flex items-center">
@@ -322,7 +169,7 @@ console.log()
         <div className="px-6 py-3 border-b border-secondary bg-dark/30">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             {/* Filter section */}
-            <div className="flex flex-col md:flex-row gap-3">
+            {/* <div className="flex flex-col md:flex-row gap-3">
               <div className="text-xs uppercase tracking-wider text-gray-500 md:self-center">
                 <FaFilter className="inline mr-1" /> Filters:
               </div>
@@ -334,7 +181,7 @@ console.log()
                 placeholder="Match Status"
                 className="w-full md:w-40"
               />
-            </div>
+            </div> */}
 
             {/* Round Selection */}
             <div className="flex items-center ml-auto">
@@ -400,12 +247,21 @@ const InteractiveMatchCard = ({ match, currentRound, matchIndex, groupId, onEdit
     team2: match.team2_score === "-" ? 0 : parseInt(match.team2_score) || 0,
   });
   const [animation, setAnimation] = useState({ team: null, direction: null });
-console.log(match)
+  // Add local state to track displayed scores
+  const [displayedScores, setDisplayedScores] = useState({
+    team1: match.team1_score,
+    team2: match.team2_score
+  });
+
   // Update scores when match prop changes
   useEffect(() => {
     setScores({
       team1: match.team1_score === "-" ? 0 : parseInt(match.team1_score) || 0,
       team2: match.team2_score === "-" ? 0 : parseInt(match.team2_score) || 0,
+    });
+    setDisplayedScores({
+      team1: match.team1_score,
+      team2: match.team2_score
     });
   }, [match.team1_score, match.team2_score]);
 
@@ -429,6 +285,12 @@ console.log(match)
       team2Score: scores.team2,
     };
 
+    // Update displayed scores immediately
+    setDisplayedScores({
+      team1: scores.team1.toString(),
+      team2: scores.team2.toString()
+    });
+    
     onSaveResult(updatedResult);
     setIsEditing(false);
   };
@@ -450,41 +312,41 @@ console.log(match)
         {/* Background image containers */}
         <div className="absolute inset-0 m-0 p-0 border-none z-0 overflow-hidden">
           {/* Left side background (Team A) */}
-          <div className="absolute inset-y-0 left-0 w-1/2 overflow-hidden">
+          <div className={`absolute inset-y-0 left-0 w-1/2 overflow-hidden transition-all duration-500 ${winner === 'team1' && !isEditing ? 'bg-gradient-to-r from-yellow-900/10 to-transparent' : ''}`}>
             <div
               className="absolute inset-0"
               style={{
                 backgroundImage: match.team1_logo ? `url(${process.env.NEXT_PUBLIC_BACKEND_URL}${match.team1_logo})` : 'none',
                 backgroundSize: 'cover',
                 backgroundPosition: 'left center',
-                opacity: 0.2,
+                opacity: winner === 'team1' && !isEditing ? 0.45 : 0.35,
               }}
             ></div>
             <div
               className="absolute inset-0"
               style={{
                 background:
-                  'linear-gradient(to right, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.7) 80%, rgba(0,0,0,1) 100%)',
+                  'linear-gradient(to right, rgba(0,0,0,0.0) 0%, rgba(0,0,0,0.5) 80%, rgba(0,0,0,0.9) 100%)',
               }}
             ></div>
           </div>
 
           {/* Right side background (Team B) */}
-          <div className="absolute inset-y-0 right-0 w-1/2 rounded-r-lg overflow-hidden">
+          <div className={`absolute inset-y-0 right-0 w-1/2 rounded-r-lg overflow-hidden transition-all duration-500 ${winner === 'team2' && !isEditing ? 'bg-gradient-to-l from-yellow-900/10 to-transparent' : ''}`}>
             <div
               className="absolute inset-0"
               style={{
                 backgroundImage: match.team2_logo ? `url(${process.env.NEXT_PUBLIC_BACKEND_URL}${match.team2_logo})` : 'none',
                 backgroundSize: 'cover',
                 backgroundPosition: 'right center',
-                opacity: 0.2,
+                opacity: winner === 'team2' && !isEditing ? 0.45 : 0.35,
               }}
             ></div>
             <div
               className="absolute inset-0"
               style={{
                 background:
-                  'linear-gradient(to left, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.7) 80%, rgba(0,0,0,1) 100%)',
+                  'linear-gradient(to left, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.5) 80%, rgba(0,0,0,0.9) 100%)',
               }}
             ></div>
           </div>
@@ -494,7 +356,7 @@ console.log(match)
             className="absolute inset-y-0 left-1/2 transform -translate-x-1/2 w-16"
             style={{
               background:
-                'linear-gradient(to bottom, rgba(0,0,0,0.9), rgba(0,0,0,1), rgba(0,0,0,0.9))',
+                'linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0.9), rgba(0,0,0,0.8))',
             }}
           ></div>
         </div>
@@ -518,19 +380,34 @@ console.log(match)
                 <span className="text-xs font-mono font-semibold text-gray-400 tracking-wide uppercase">
                   TEAM A
                 </span>
-                <span className="text-lg font-valorant hover:text-primary transition-all duration-300 truncate block">
+                <span className={`text-lg font-valorant hover:text-primary transition-all duration-300 truncate block ${winner === 'team1' && !isEditing ? 'text-yellow-400' : ''}`}>
                   {match.team1_name}
                 </span>
 
-                {/* Winner trophy */}
+                {/* Winner trophy - Enhanced */}
                 {winner === 'team1' && !isEditing && isPlayed && (
                   <motion.div
-                    className="absolute -top-3 -left-6"
+                    className="absolute -top-4 -left-8 flex items-center"
                     initial={{ opacity: 0, scale: 0 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.5 }}
                   >
-                    <FaTrophy className="text-yellow-500 text-lg" />
+                    <motion.div
+                      className="bg-yellow-500/20 rounded-full p-1.5"
+                      animate={{ 
+                        boxShadow: ['0 0 0px rgba(234, 179, 8, 0.5)', '0 0 15px rgba(234, 179, 8, 0.8)', '0 0 0px rgba(234, 179, 8, 0.5)'],
+                      }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                    >
+                      <FaTrophy className="text-yellow-500 text-xl" />
+                    </motion.div>
+                    <motion.span 
+                      className="ml-1 text-xs font-bold text-yellow-500"
+                      animate={{ opacity: [0.5, 1, 0.5] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                    >
+                      WINNER
+                    </motion.span>
                   </motion.div>
                 )}
               </motion.div>
@@ -634,7 +511,7 @@ console.log(match)
                       isPlayed ? 'text-primary' : 'text-gray-600'
                     }`}
                   >
-                    {isPlayed ? match.team1_score : '-'}
+                    {isPlayed ? displayedScores.team1 : '-'}
                   </span>
 
                   <div
@@ -655,7 +532,7 @@ console.log(match)
                       isPlayed ? 'text-primary' : 'text-gray-600'
                     }`}
                   >
-                    {isPlayed ? match.team2_score : '-'}
+                    {isPlayed ? displayedScores.team2 : '-'}
                   </span>
                 </div>
               )}
@@ -706,18 +583,34 @@ console.log(match)
                   {match.team2_name}
                 </span>
 
-                {/* Winner trophy */}
+                {/* Winner trophy - Enhanced */}
                 {winner === 'team2' && !isEditing && isPlayed && (
                   <motion.div
-                  className="absolute -top-3 -right-6"
-                  initial={{ opacity: 0, scale: 0 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.5 }}
-                >
-                  <FaTrophy className="text-yellow-500 text-lg" />
-                </motion.div>
-              )}
-            </motion.div>
+                    className="absolute -top-4 -right-8 flex items-center justify-end"
+                    initial={{ opacity: 0, scale: 0 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    <motion.span 
+                      className="mr-1 text-xs font-bold text-yellow-500"
+                      animate={{ opacity: [0.5, 1, 0.5] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                    >
+                      WINNER
+                    </motion.span>
+                    <motion.div
+                      className="bg-yellow-500/20 rounded-full p-1.5"
+                      animate={{ 
+                        boxShadow: ['0 0 0px rgba(234, 179, 8, 0.5)', '0 0 15px rgba(234, 179, 8, 0.8)', '0 0 0px rgba(234, 179, 8, 0.5)'],
+                      }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                    >
+                      <FaTrophy className="text-yellow-500 text-xl" />
+                    </motion.div>
+                  </motion.div>
+                )}
+              </motion.div>
+            </div>
           </div>
         </div>
       </div>
@@ -736,9 +629,9 @@ console.log(match)
           transition={{ duration: 2, repeat: Infinity }}
         />
       )}
-    </div>
-  </div>
-);
+    </div>);
+
+
 };
 
 export default GroupModal;

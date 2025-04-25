@@ -334,7 +334,7 @@ const BattleRoyale = ({ tournamentId }) => {
         setLoading(true);
         
         // Use fake data in development mode
-        if (process.env.NODE_ENV === 'development') {
+        if (false) {
           const fakeData = await getFakeBattleRoyaleData(tournamentId);
           setTeams(fakeData.participants);
           setTournamentInfo(fakeData.tournament);
@@ -365,35 +365,7 @@ const BattleRoyale = ({ tournamentId }) => {
     fetchLeaderboardData();
   }, [tournamentId]);
 
-  const handleUpdateTeam = async () => {
-    try {
-      // Convert string values to integers before updating
-      const updatedTeam = {
-        ...editingTeam,
-        total_kills: parseInt(editingTeam.total_kills || 0),
-        total_placement_points: parseInt(editingTeam.total_placement_points || 0),
-        total_points: parseInt(editingTeam.total_kills || 0) + parseInt(editingTeam.total_placement_points || 0)
-      };
-
-      // You would normally send this to the backend for persistence
-      // For now, we'll just update the state locally
-      setTeams(prevTeams =>
-        prevTeams.map(team =>
-          team.team_id === updatedTeam.team_id ? updatedTeam : team
-        )
-      );
-
-      // Close the modal
-      setEditingTeam(null);
-      setShowEditModal(false);
-
-
-
-    } catch (err) {
-      console.error('Error updating team stats:', err);
-      alert('Failed to update team stats. Please try again.');
-    }
-  };
+ 
   // Filter teams based on search term
   const filteredTeams = Array.isArray(teams) ? teams.filter(
     (team) =>
@@ -706,7 +678,31 @@ const BattleRoyale = ({ tournamentId }) => {
   // Add Match Results Form
   // Add Match Results Form
 
+  const handleUpdateTeam = async () => {
+    try {
+      // Convert string values to integers before updating
+      const updatedTeam = {
+        ...editingTeam,
+        total_kills: parseInt(editingTeam.total_kills || 0),
+        total_placement_points: parseInt(editingTeam.total_placement_points || 0),
+        total_points: parseInt(editingTeam.total_kills || 0) + parseInt(editingTeam.total_placement_points || 0)
+      };
 
+      // Fix: Use participant_id instead of team_id for comparison
+      setTeams(prevTeams =>
+        prevTeams.map(team =>
+          team.participant_id === updatedTeam.participant_id ? updatedTeam : team
+        )
+      );
+
+      // Close the modal
+      setEditingTeam(null);
+      setShowEditModal(false);
+    } catch (err) {
+      console.error('Error updating team stats:', err);
+      alert('Failed to update team stats. Please try again.');
+    }
+  };
   // Replace your existing EditTeamModal with this improved version
   const EditTeamModal = () => {
     if (!showEditModal || !editingTeam) return null;

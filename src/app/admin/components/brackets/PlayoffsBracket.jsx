@@ -1,174 +1,54 @@
 import React, { useState, useEffect } from 'react';
-import { FaTrophy, FaMedal, FaUserFriends, FaRegClock } from 'react-icons/fa';
+import { FaTrophy, FaMedal, FaUserFriends, FaRegClock, FaSpinner } from 'react-icons/fa';
 import { motion } from 'framer-motion';
-
-// Helper function to generate playoff bracket matches from qualified teams
-const generatePlayoffBracket = (qualifiedTeams) => {
-  // Sort teams by points/standings
-  const sortedTeams = [...qualifiedTeams].sort((a, b) => b.points - a.points);
-  
-  // Determine bracket size (next power of 2)
-  const numTeams = sortedTeams.length;
-  let bracketSize = 1;
-  while (bracketSize < numTeams) bracketSize *= 2;
-  
-  // Create initial round matches with seeded teams
-  const rounds = [];
-  const firstRound = [];
-  
-  // Generate first round matches with proper seeding
-  // Common seeding pattern for tournaments (1 vs 8, 4 vs 5, 2 vs 7, 3 vs 6)
-  for (let i = 0; i < bracketSize / 2; i++) {
-    const team1Idx = i;
-    const team2Idx = bracketSize - 1 - i;
-    
-    const match = {
-      id: `R1M${i+1}`,
-      team1: team1Idx < numTeams ? sortedTeams[team1Idx] : null,
-      team2: team2Idx < numTeams ? sortedTeams[team2Idx] : null,
-      winner: null,
-      score1: null,
-      score2: null,
-      nextMatchId: `R2M${Math.floor(i/2) + 1}`
-    };
-    
-    // If one team is missing, the other advances automatically
-    if (match.team1 && !match.team2) {
-      match.winner = match.team1;
-      match.score1 = 1;
-      match.score2 = 0;
-    } else if (!match.team1 && match.team2) {
-      match.winner = match.team2;
-      match.score1 = 0;
-      match.score2 = 1;
-    }
-    
-    firstRound.push(match);
-  }
-  
-  rounds.push(firstRound);
-  
-  // Generate subsequent rounds (empty brackets to be filled as tournament progresses)
-  let matchesInRound = bracketSize / 4;
-  let roundNumber = 2;
-  
-  while (matchesInRound >= 1) {
-    const round = [];
-    for (let i = 0; i < matchesInRound; i++) {
-      let nextMatchId = null;
-      if (matchesInRound > 1) {
-        nextMatchId = `R${roundNumber+1}M${Math.floor(i/2) + 1}`;
-      }
-      
-      round.push({
-        id: `R${roundNumber}M${i+1}`,
-        team1: null,
-        team2: null,
-        winner: null,
-        score1: null,
-        score2: null,
-        nextMatchId
-      });
-    }
-    rounds.push(round);
-    matchesInRound /= 2;
-    roundNumber++;
-  }
-  
-  return rounds;
-};
-
-// Helper to advance teams in the bracket based on match results
-const advanceTeamsInBracket = (bracketRounds) => {
-  const updatedRounds = [...bracketRounds];
-  
-  // For each round except the final
-  for (let roundIndex = 0; roundIndex < updatedRounds.length - 1; roundIndex++) {
-    const currentRound = updatedRounds[roundIndex];
-    
-    // For each match in the round
-    for (const match of currentRound) {
-      // If there's a winner and a next match ID
-      if (match.winner && match.nextMatchId) {
-        // Find the next match
-        const [nextRoundStr, nextMatchStr] = match.nextMatchId.match(/R(\d+)M(\d+)/).slice(1);
-        const nextRoundIndex = parseInt(nextRoundStr) - 1;
-        const nextMatchIndex = parseInt(nextMatchStr) - 1;
-        
-        if (nextRoundIndex < updatedRounds.length) {
-          const nextMatch = updatedRounds[nextRoundIndex][nextMatchIndex];
-          
-          // Determine if this winner should be team1 or team2 in the next match
-          // In standard brackets, even-indexed matches feed into team1 positions,
-          // and odd-indexed matches feed into team2 positions
-          const matchIndexInRound = currentRound.findIndex(m => m.id === match.id);
-          if (matchIndexInRound % 2 === 0) {
-            nextMatch.team1 = match.winner;
-          } else {
-            nextMatch.team2 = match.winner;
-          }
-        }
-      }
-    }
-  }
-  
-  return updatedRounds;
-};
-
-// Helper to get top teams from each group as qualified teams
-const getQualifiedTeamsFromGroups = (groups, teamsPerGroup = 2) => {
-  const qualifiedTeams = [];
-  
-  groups.forEach(group => {
-    // Sort by points (descending)
-    const sortedTeams = [...group.standings]
-      .sort((a, b) => {
-        // First sort by points
-        if (b.points !== a.points) return b.points - a.points;
-        
-        // If tied on points, sort by goal difference
-        const aGoalDiff = a.goalsFor - a.goalsAgainst;
-        const bGoalDiff = b.goalsFor - b.goalsAgainst;
-        if (bGoalDiff !== aGoalDiff) return bGoalDiff - aGoalDiff;
-        
-        // If still tied, sort by goals for
-        return b.goalsFor - a.goalsFor;
-      });
-    
-    // Take top teams from each group
-    sortedTeams.slice(0, teamsPerGroup).forEach(team => {
-      qualifiedTeams.push({
-        ...team,
-        groupName: group.name,
-        groupId: group.id
-      });
-    });
-  });
-  
-  return qualifiedTeams;
-};
+import axios from 'axios';
 
 // Main PlayoffsBracket component
-const PlayoffsBracket = ({ groups, matchResults = [], onSaveResult = () => {} }) => {
-  const [bracketRounds, setBracketRounds] = useState([]);
+const PlayoffsBracket = ({ bracketData, tournamentId, onSaveResult = () => {} }) => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [editMatchId, setEditMatchId] = useState(null);
   const [editScores, setEditScores] = useState({ score1: 0, score2: 0 });
   
-  // Generate playoff bracket when groups data changes
+  // If we're passed bracketData directly, use it, otherwise we'd fetch it
+  const [rounds, setRounds] = useState(bracketData?.rounds || []);
+  
+  // Fetch playoff data if not provided
   useEffect(() => {
-    if (groups && groups.length > 0) {
-      // Get top 2 teams from each group
-      const qualifiedTeams = getQualifiedTeamsFromGroups(groups, 2);
-      
-      // Generate the initial bracket
-      const initialBracket = generatePlayoffBracket(qualifiedTeams);
-      
-      // Apply any existing results and advance teams
-      const updatedBracket = advanceTeamsInBracket(initialBracket);
-      
-      setBracketRounds(updatedBracket);
+    if (bracketData) {
+      setRounds(bracketData.rounds);
+      return;
     }
-  }, [groups]);
+    
+    if (tournamentId) {
+      fetchPlayoffData();
+    }
+  }, [bracketData, tournamentId]);
+  
+  // Function to fetch playoff data from backend
+  const fetchPlayoffData = async () => {
+    if (!tournamentId) return;
+    
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/get_playoffs.php?tournament_id=${tournamentId}`
+      );
+      
+      if (response.data.success && response.data.data.has_playoffs) {
+        setRounds(response.data.data.bracket.rounds);
+      } else {
+        setError('No playoff data available');
+      }
+    } catch (err) {
+      console.error('Error fetching playoff data:', err);
+      setError('Failed to load playoff data');
+    } finally {
+      setLoading(false);
+    }
+  };
   
   // Handle editing a match
   const handleEditMatch = (match) => {
@@ -179,48 +59,92 @@ const PlayoffsBracket = ({ groups, matchResults = [], onSaveResult = () => {} })
     });
   };
   
-  // Handle saving a match result
-  const handleSaveResult = (matchId) => {
-    const updatedBracket = [...bracketRounds];
-    
-    // Find and update the match
-    let matchFound = false;
-    for (let i = 0; i < updatedBracket.length; i++) {
-      const matchIndex = updatedBracket[i].findIndex(m => m.id === matchId);
-      if (matchIndex !== -1) {
-        const match = updatedBracket[i][matchIndex];
-        match.score1 = editScores.score1;
-        match.score2 = editScores.score2;
-        
-        // Determine winner
-        if (editScores.score1 > editScores.score2) {
-          match.winner = match.team1;
-        } else if (editScores.score2 > editScores.score1) {
-          match.winner = match.team2;
-        } else {
-          // In case of a tie, we could handle penalties or other tiebreakers
-          // For now, we'll just clear the winner
-          match.winner = null;
+  // Helper to update a specific match within the rounds data structure
+  const updateMatchInRounds = (matchId, updatedData) => {
+    return rounds.map(round => {
+      const updatedRound = round.map(match => {
+        if (match.id === matchId) {
+          // Return updated match
+          return {
+            ...match,
+            ...updatedData,
+            // Update participants with winner information
+            participants: match.participants ? match.participants.map((participant, index) => {
+              const isWinner = 
+                (updatedData.score1 > updatedData.score2 && index === 0) || 
+                (updatedData.score2 > updatedData.score1 && index === 1);
+              
+              return {
+                ...participant,
+                is_winner: isWinner,
+                result_text: `${index === 0 ? updatedData.score1 : updatedData.score2}-${index === 0 ? updatedData.score2 : updatedData.score1}`
+              };
+            }) : []
+          };
         }
-        
-        matchFound = true;
-        break;
-      }
-    }
-    
-    if (matchFound) {
-      // Advance winners through the bracket
-      const finalBracket = advanceTeamsInBracket(updatedBracket);
-      setBracketRounds(finalBracket);
-      
-      // Call parent callback if needed
-      onSaveResult({
-        matchId,
-        ...editScores,
-        winner: finalBracket.find(round => round.some(m => m.id === matchId))
-          ?.find(m => m.id === matchId)?.winner
+        return match;
       });
+      return updatedRound;
+    });
+  };
+  
+  // Handle saving a match result
+  const handleSaveResult = async (match) => {
+    setLoading(true);
+    
+    try {
+      // First update the UI immediately with optimistic update
+      const updatedData = {
+        score1: editScores.score1,
+        score2: editScores.score2,
+        state: 'SCORE_DONE'
+      };
       
+      // Update the local state immediately
+      setRounds(updateMatchInRounds(match.id, updatedData));
+      
+      // Call API to update match result
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/update_playoff_match.php?match_id=${match.id}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            team1_score: editScores.score1,
+            team2_score: editScores.score2
+          })
+        }
+      );
+      const data = await response.json();
+      
+      if (data.success) {
+        console.log('Match updated successfully:', data);
+        
+        // After a short delay, fetch the full updated bracket
+        // This ensures any team advancements are reflected
+        setTimeout(() => {
+          fetchPlayoffData();
+        }, 1000);
+        
+        // Call parent callback if needed
+        onSaveResult({
+          matchId: match.id,
+          ...editScores
+        });
+      } else {
+        setError('Failed to save match result');
+        // Revert optimistic update if the API call failed
+        fetchPlayoffData();
+      }
+    } catch (err) {
+      console.error('Error updating match result:', err);
+      setError('Error updating match result');
+      // Revert optimistic update if there was an error
+      fetchPlayoffData();
+    } finally {
+      setLoading(false);
       setEditMatchId(null);
     }
   };
@@ -229,8 +153,38 @@ const PlayoffsBracket = ({ groups, matchResults = [], onSaveResult = () => {} })
     setEditMatchId(null);
   };
   
-  // Check if we have bracket data to show
-  if (!bracketRounds.length) {
+  // Loading state
+  if (loading && !rounds.length) {
+    return (
+      <div className="flex items-center justify-center h-64 w-full bg-gray-900/30 rounded-lg border border-gray-800">
+        <div className="text-center">
+          <FaSpinner className="mx-auto text-4xl text-primary/50 mb-4 animate-spin" />
+          <p className="text-gray-400">Loading playoff bracket...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  // Error state
+  if (error && !rounds.length) {
+    return (
+      <div className="flex items-center justify-center h-64 w-full bg-gray-900/30 rounded-lg border border-gray-800">
+        <div className="text-center">
+          <div className="text-red-500 mb-4">⚠️</div>
+          <p className="text-gray-400">{error}</p>
+          <button 
+            className="mt-4 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/80 transition-colors"
+            onClick={fetchPlayoffData}
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+  
+  // No data state
+  if (!rounds || rounds.length === 0) {
     return (
       <div className="flex items-center justify-center h-64 w-full bg-gray-900/30 rounded-lg border border-gray-800">
         <div className="text-center">
@@ -244,19 +198,9 @@ const PlayoffsBracket = ({ groups, matchResults = [], onSaveResult = () => {} })
   
   return (
     <div className="w-full">
-      <div className="mb-6">
-        <h2 className="text-2xl font-custom tracking-widest text-white flex items-center">
-          <FaTrophy className="mr-2 text-primary" />
-          Knockout Stage
-        </h2>
-        <p className="text-gray-400 text-sm mt-1">
-          Top teams from the group stage compete in a single elimination bracket
-        </p>
-      </div>
-      
       <div className="overflow-x-auto pb-6">
         <div className="flex min-w-max space-x-8 p-4">
-          {bracketRounds.map((round, roundIndex) => (
+          {rounds.map((round, roundIndex) => (
             <div 
               key={`round-${roundIndex}`} 
               className="flex flex-col justify-around"
@@ -264,13 +208,13 @@ const PlayoffsBracket = ({ groups, matchResults = [], onSaveResult = () => {} })
             >
               <div className="mb-4 text-center">
                 <span className="px-4 py-1 rounded-full bg-gray-800 text-primary text-sm font-bold">
-                  {roundIndex === bracketRounds.length - 1 
+                  {roundIndex === 0 
                     ? "Final" 
-                    : roundIndex === bracketRounds.length - 2 
+                    : roundIndex === 1 
                       ? "Semi-Finals" 
-                      : roundIndex === bracketRounds.length - 3 
+                      : roundIndex === 2 
                         ? "Quarter-Finals"
-                        : `Round ${roundIndex + 1}`}
+                        : `Round ${rounds.length - roundIndex}`}
                 </span>
               </div>
               
@@ -283,33 +227,17 @@ const PlayoffsBracket = ({ groups, matchResults = [], onSaveResult = () => {} })
                     editScores={editScores}
                     setEditScores={setEditScores}
                     onEdit={() => handleEditMatch(match)}
-                    onSave={() => handleSaveResult(match.id)}
+                    onSave={() => handleSaveResult(match)}
                     onCancel={cancelEdit}
-                    isFinal={roundIndex === bracketRounds.length - 1}
+                    isFinal={roundIndex === 0}
+                    hasParticipants={match.participants && match.participants.length > 0}
+                    isUpdating={loading && editMatchId === match.id}
                   />
                 ))}
               </div>
             </div>
           ))}
         </div>
-      </div>
-      
-      {/* Legend */}
-      <div className="mt-8 p-4 bg-gray-900/50 rounded-lg border border-gray-800">
-        <h3 className="text-lg font-semibold mb-2 text-primary">Playoffs Information</h3>
-        <div className="flex flex-wrap gap-4">
-          <div className="flex items-center">
-            <div className="w-4 h-4 rounded-full bg-green-500/40 mr-2"></div>
-            <p className="text-sm">Winners advance to next round</p>
-          </div>
-          <div className="flex items-center">
-            <div className="w-4 h-4 rounded-full bg-yellow-500/40 mr-2"></div>
-            <p className="text-sm">Final match determines tournament champion</p>
-          </div>
-        </div>
-        <p className="text-xs text-gray-400 mt-2">
-          All matches are played as single elimination. In case of a tie, additional rules may apply based on tournament settings.
-        </p>
       </div>
     </div>
   );
@@ -324,7 +252,9 @@ const BracketMatch = ({
   onEdit, 
   onSave, 
   onCancel,
-  isFinal 
+  isFinal,
+  hasParticipants,
+  isUpdating
 }) => {
   // Helper for background styling
   const getBackgroundStyle = (team) => {
@@ -338,19 +268,40 @@ const BracketMatch = ({
     };
   };
   
+  const getWinner = () => {
+    if (!match.participants || match.participants.length === 0) return null;
+    
+    // Check if there's a participant marked as winner
+    const winner = match.participants.find(p => p.is_winner);
+    if (winner) return winner;
+    
+    // Or use scores to determine winner
+    if (match.score1 !== undefined && match.score2 !== undefined) {
+      if (match.score1 > match.score2 && match.participants[0]) {
+        return match.participants[0];
+      } else if (match.score2 > match.score1 && match.participants[1]) {
+        return match.participants[1];
+      }
+    }
+    
+    return null;
+  };
+  
+  const winner = getWinner();
+  
   // Handle score changes
   const handleScoreChange = (team, value) => {
     if (isEditing) {
       setEditScores(prev => ({
         ...prev,
-        [team]: Math.max(0, value)
+        [team]: Math.max(0, parseInt(value) || 0)
       }));
     }
   };
   
   return (
     <motion.div 
-      className="w-64 h-auto rounded-lg overflow-hidden bg-gray-900/30 border border-gray-800 relative mb-6"
+      className="w-64 h-auto rounded-lg overflow-hidden relative mb-6"
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.3 }}
@@ -358,7 +309,7 @@ const BracketMatch = ({
       {/* Highlight for final match */}
       {isFinal && (
         <motion.div 
-          className="absolute inset-0 border-2 border-yellow-500/50 rounded-lg pointer-events-none"
+          className="absolute inset-0  rounded-lg pointer-events-none"
           animate={{
             boxShadow: [
               '0 0 0 rgba(234, 179, 8, 0)',
@@ -371,7 +322,7 @@ const BracketMatch = ({
       )}
     
       {/* Champion badge for final winner */}
-      {isFinal && match.winner && (
+      {isFinal && winner && (
         <div className="absolute -top-3 -right-3 bg-yellow-500 rounded-full p-2 z-10 shadow-lg">
           <FaTrophy className="text-gray-900" />
         </div>
@@ -381,26 +332,29 @@ const BracketMatch = ({
       <div className="p-3">
         {/* Match header */}
         <div className="flex justify-between items-center mb-2 text-xs text-gray-400">
-          <span className="font-mono">{match.id}</span>
+          <span className="font-mono">{match.name || match.id}</span>
           {!isEditing ? (
             <button
               onClick={onEdit}
               className="bg-primary/20 hover:bg-primary/40 px-2 py-1 rounded text-primary text-xs transition-colors"
-              disabled={!match.team1 || !match.team2}
+              disabled={!hasParticipants || match.participants?.length < 2}
             >
-              {match.score1 !== null ? 'Edit' : 'Set Score'}
+              {match.score1 !== null && match.score1 !== undefined ? 'Edit' : 'Set Score'}
             </button>
           ) : (
             <div className="flex space-x-1">
               <button
                 onClick={onSave}
-                className="bg-green-600/20 hover:bg-green-600/40 px-2 py-0.5 rounded text-green-500 text-xs transition-colors"
+                className="bg-green-600/20 hover:bg-green-600/40 px-2 py-0.5 rounded text-green-500 text-xs transition-colors flex items-center"
+                disabled={isUpdating}
               >
+                {isUpdating ? <FaSpinner className="animate-spin mr-1" size={10} /> : null}
                 Save
               </button>
               <button
                 onClick={onCancel}
                 className="bg-red-600/20 hover:bg-red-600/40 px-2 py-0.5 rounded text-red-500 text-xs transition-colors"
+                disabled={isUpdating}
               >
                 Cancel
               </button>
@@ -412,13 +366,20 @@ const BracketMatch = ({
         <div className="space-y-2">
           {/* Team 1 */}
           <div className={`relative rounded-md overflow-hidden transition-all ${
-            match.winner === match.team1 ? 'border-l-4 border-green-500' : ''
+            winner && match.participants?.[0]?.id === winner.id ? 'border-l-4 border-green-500' : ''
           }`}>
             <div className="absolute inset-0 z-0">
-              <div
-                className="absolute inset-0"
-                style={getBackgroundStyle(match.team1)}
-              ></div>
+              {match.participants?.[0]?.picture && (
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    backgroundImage: `url(${process.env.NEXT_PUBLIC_BACKEND_URL}${match.participants[0].picture})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    opacity: 0.2,
+                  }}
+                ></div>
+              )}
               <div
                 className="absolute inset-0"
                 style={{
@@ -430,17 +391,18 @@ const BracketMatch = ({
             
             <div className="p-2 flex justify-between items-center relative z-10">
               <div className="flex items-center">
-                {match.team1 && match.team1.teamImage && (
+                {match.participants?.[0]?.picture && (
                   <div className="w-6 h-6 rounded-full overflow-hidden bg-gray-800 mr-2 border border-gray-700">
-                    <img src={match.team1.teamImage} alt={match.team1.teamName} className="w-full h-full object-cover" />
+                    <img 
+                      src={`${process.env.NEXT_PUBLIC_BACKEND_URL}${match.participants[0].picture}`} 
+                      alt={match.participants[0].name} 
+                      className="w-full h-full object-cover" 
+                    />
                   </div>
                 )}
                 <div>
-                  <span className="text-xs text-gray-400">
-                    {match.team1 && match.team1.groupName ? match.team1.groupName : "TBD"}
-                  </span>
-                  <div className={`font-valorant ${match.team1 ? 'text-white' : 'text-gray-500'}`}>
-                    {match.team1 ? match.team1.teamName : "To Be Determined"}
+                  <div className={`font-valorant ${match.participants?.[0] ? 'text-white' : 'text-gray-500'}`}>
+                    {match.participants?.[0]?.name || "To Be Determined"}
                   </div>
                 </div>
               </div>
@@ -451,12 +413,12 @@ const BracketMatch = ({
                     type="number"
                     min="0"
                     value={editScores.score1}
-                    onChange={(e) => handleScoreChange('score1', parseInt(e.target.value))}
+                    onChange={(e) => handleScoreChange('score1', e.target.value)}
                     className="w-10 bg-gray-800 border border-gray-700 rounded text-center text-white"
                   />
                 ) : (
                   <span className="text-xl font-bold text-primary">
-                    {match.score1 !== null ? match.score1 : "-"}
+                    {match.score1 !== null && match.score1 !== undefined ? match.score1 : "-"}
                   </span>
                 )}
               </div>
@@ -472,13 +434,20 @@ const BracketMatch = ({
           
           {/* Team 2 */}
           <div className={`relative rounded-md overflow-hidden transition-all ${
-            match.winner === match.team2 ? 'border-l-4 border-green-500' : ''
+            winner && match.participants?.[1]?.id === winner.id ? 'border-l-4 border-green-500' : ''
           }`}>
             <div className="absolute inset-0 z-0">
-              <div
-                className="absolute inset-0"
-                style={getBackgroundStyle(match.team2)}
-              ></div>
+              {match.participants?.[1]?.picture && (
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    backgroundImage: `url(${process.env.NEXT_PUBLIC_BACKEND_URL}${match.participants[1].picture})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    opacity: 0.2,
+                  }}
+                ></div>
+              )}
               <div
                 className="absolute inset-0"
                 style={{
@@ -490,17 +459,18 @@ const BracketMatch = ({
             
             <div className="p-2 flex justify-between items-center relative z-10">
               <div className="flex items-center">
-                {match.team2 && match.team2.teamImage && (
+                {match.participants?.[1]?.picture && (
                   <div className="w-6 h-6 rounded-full overflow-hidden bg-gray-800 mr-2 border border-gray-700">
-                    <img src={match.team2.teamImage} alt={match.team2.teamName} className="w-full h-full object-cover" />
+                    <img 
+                      src={`${process.env.NEXT_PUBLIC_BACKEND_URL}${match.participants[1].picture}`} 
+                      alt={match.participants[1].name} 
+                      className="w-full h-full object-cover" 
+                    />
                   </div>
                 )}
                 <div>
-                  <span className="text-xs text-gray-400">
-                    {match.team2 && match.team2.groupName ? match.team2.groupName : "TBD"}
-                  </span>
-                  <div className={`font-valorant ${match.team2 ? 'text-white' : 'text-gray-500'}`}>
-                    {match.team2 ? match.team2.teamName : "To Be Determined"}
+                  <div className={`font-valorant ${match.participants?.[1] ? 'text-white' : 'text-gray-500'}`}>
+                    {match.participants?.[1]?.name || "To Be Determined"}
                   </div>
                 </div>
               </div>
@@ -511,12 +481,12 @@ const BracketMatch = ({
                     type="number"
                     min="0"
                     value={editScores.score2}
-                    onChange={(e) => handleScoreChange('score2', parseInt(e.target.value))}
+                    onChange={(e) => handleScoreChange('score2', e.target.value)}
                     className="w-10 bg-gray-800 border border-gray-700 rounded text-center text-white"
                   />
                 ) : (
                   <span className="text-xl font-bold text-primary">
-                    {match.score2 !== null ? match.score2 : "-"}
+                    {match.score2 !== null && match.score2 !== undefined ? match.score2 : "-"}
                   </span>
                 )}
               </div>
@@ -526,26 +496,18 @@ const BracketMatch = ({
       </div>
       
       {/* Match bottom info */}
-      <div className="bg-gray-900 p-2 text-xs text-gray-400 flex justify-between">
-        <div className="flex items-center">
-          <FaRegClock className="mr-1" />
-          <span>TBD</span>
-        </div>
-        <div className="flex items-center">
-          {match.winner && (
-            <>
-              <FaMedal className="mr-1 text-yellow-500" />
-              <span className="text-yellow-500">
-                {match.winner.teamName}
-              </span>
-            </>
-          )}
-        </div>
-      </div>
+    
       
       {/* Connector lines for bracket visualization */}
       {match.nextMatchId && (
         <div className="absolute right-0 top-1/2 w-8 border-t-2 border-gray-700"></div>
+      )}
+      
+      {/* Loading overlay when updating */}
+      {isUpdating && (
+        <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-20">
+          <FaSpinner className="animate-spin text-2xl text-primary" />
+        </div>
       )}
     </motion.div>
   );

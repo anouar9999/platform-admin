@@ -16,6 +16,7 @@ import TournamentBracket from '../../../TournamentBracket';
 import DoubleEliminationBracket from '@/app/admin/DoubleElminationBracket';
 import InfoCard from './InfoCard';
 import BattleRoyale from '@/app/admin/components/brackets/BattleRoyal';
+import { FaTrophy } from 'react-icons/fa';
 
 const TabComponent = ({ activeTab, onTabChange, tournament,gameData }) => {
   const tabs = ['Overview', 'Waiting List', 'Participants', 'Bracket'];
@@ -61,7 +62,7 @@ const TabComponent = ({ activeTab, onTabChange, tournament,gameData }) => {
                       {/* Background Game Image Layer */}
                       <div className="absolute inset-0 z-0">
                         <img
-                          src={'https://i.ytimg.com/vi/HA29W7J8dQE/maxresdefault.jpg'}
+                          src={tournament.game_image}
                           alt={tournament.game_name || 'Tournament Game'}
                           className="w-full h-full object-cover"
                           onError={(e) => {
@@ -117,13 +118,7 @@ const TabComponent = ({ activeTab, onTabChange, tournament,gameData }) => {
                                 label="Participation type"
                               />
                               <InfoCard
-                                icon={
-                                  <img
-                                  className='rounded-lg'
-                                    width={'50px'}
-                                    src={`${gameData.game_image}`}
-                                  />
-                                }
+                                
                                 value={gameData.game_name}
                                 label="Tournament Game"
                               />
@@ -164,10 +159,33 @@ const TabComponent = ({ activeTab, onTabChange, tournament,gameData }) => {
         return <WaitingList tournamentId={tournament.id} />;
       case 'Participants':
         return <ParticipantList tournamentId={tournament.id} />;
-      case 'Bracket':
-        return <BattleRoyale tournamentId={tournament.id}
-       
-      />;
+        case 'Bracket':
+          if (tournament.status === "ongoing") {
+            return <TournamentBracket 
+              bracketType={tournament.bracket_type} 
+              tournamentId={tournament.id}
+            />;
+          } else {
+            return (
+              <div className="flex flex-col items-center justify-center p-8 ">
+                <div className="text-3xl text-gray-400 mb-4">
+                  <FaTrophy className="mx-auto opacity-25" />
+                </div>
+                <h3 className="text-xl font-semibold text-white mb-2">
+                  Tournament Bracket Not Available
+                </h3>
+                <p className="text-gray-400 text-center max-w-md">
+                  {tournament.status === "registration_open" 
+                    ? "Registration is still open. The bracket will be generated once the tournament begins."
+                    : tournament.status === "registration_closed"
+                      ? "Registration has closed. The bracket will be generated when the tournament starts."
+                      : tournament.status === "completed"
+                        ? "This tournament has concluded. The bracket view is no longer available."
+                        : "The tournament bracket has not been generated yet."}
+                </p>
+              </div>
+            );
+          }
       default:
         return <p className="text-center text-gray-400">Content for {activeTab}</p>;
     }

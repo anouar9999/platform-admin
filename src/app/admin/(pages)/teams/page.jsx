@@ -195,7 +195,7 @@ const TeamCard = ({ team, onEdit, onDelete }) => {
 
           {/* Team name and badges */}
           <div className="flex-1">
-            <h3 className="text-lg font-custom tracking-widest text-white leading-tight truncate">{name}</h3>
+            <h3 className="text-lg font-custom tracking-widest text-white leading-tight truncate">{name}bb</h3>
             
             {/* Tier and division badges */}
             <div className="flex items-center mt-1.5 gap-2">
@@ -206,9 +206,9 @@ const TeamCard = ({ team, onEdit, onDelete }) => {
                   color: divisionData.color
                 }}
               >
-                              <img className="w-10 h-10" src="https://curry.gg/uploads/703/64q9D5Bw2mASHeqoTlvoglqW7P7p1G-metaR29sZCAzLnBuZw==-.png" />
+                <img className="w-10 h-10" src="https://curry.gg/uploads/703/64q9D5Bw2mASHeqoTlvoglqW7P7p1G-metaR29sZCAzLnBuZw==-.png" />
 
-                <span className="ml-1 font-medium">{division.toUpperCase()}</span>
+                <span className="ml-1 font-medium">{division ? division.toUpperCase() : 'UNRANKED'}</span>
               </div>
             </div>
           </div>

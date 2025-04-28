@@ -125,7 +125,7 @@ const ProfileCard = ({user, onEdit, onDelete }) => {
   const typeBadge = getUserTypeBadge();
   
   // Truncate bio if needed
-  const truncateBio = (text, maxLength = 100) => {
+  const truncateBio = (text, maxLength = 50) => {
     if (!text) return "";
     return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
   };

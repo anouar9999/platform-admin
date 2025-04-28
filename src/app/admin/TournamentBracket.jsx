@@ -14,11 +14,11 @@ const TournamentBracket = ({ bracketType, tournamentId }) => {
       //   return <DoubleEliminationBracket data={tournamentId} />;
       
       case 'round robin':
-        return <MultiGroupRoundRobinTournament data={tournamentId} />;
+        return <MultiGroupRoundRobinTournament tournamentId={tournamentId} />;
       
   
       case 'battle royale':
-        return <BattleRoyale data={tournamentId} />;
+        return <BattleRoyale tournamentId={tournamentId} />;
       
       default:
         return (

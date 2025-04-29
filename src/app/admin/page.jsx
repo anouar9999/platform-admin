@@ -140,7 +140,6 @@ const GameCard = ({ game, count, color, icon: Icon }) => {
 
 const GeniusMoDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
-  const [lastRefreshed, setLastRefreshed] = useState(null);
   const [error, setError] = useState(null);
   
   // Initialize stats state with default values
@@ -157,12 +156,7 @@ const GeniusMoDashboard = () => {
     activeTeams: 0,
     averageTeamSize: 0,
     pendingJoinRequests: 0,
-    teamsPerGame: {
-      valorant: 0,
-      freeFire: 0,
-      streetFighter: 0, 
-      fcFootball: 0,
-    },
+    teamsPerGame: {},
     teamPrivacyDistribution: {
       public: 0,
       private: 0,
@@ -172,7 +166,8 @@ const GeniusMoDashboard = () => {
     tournamentsByType: {
       singleElimination: 0,
       doubleElimination: 0,
-      roundRobin: 0
+      roundRobin: 0,
+      battleRoyale: 0
     }
   });
 
@@ -193,21 +188,11 @@ const GeniusMoDashboard = () => {
       
       if (data.success) {
         // Update stats with the data from the API
-        setStats({
-          ...data.data,
-          // Add derived data that might not be in the API
-          tournamentsByType: {
-            // If these aren't provided directly by the API, you can set defaults
-            singleElimination: 3,
-            doubleElimination: 2,
-            roundRobin: 1
-          }
-        });
+        setStats(data.data);
       } else {
         throw new Error(data.error || 'Failed to fetch dashboard stats');
       }
       
-      setLastRefreshed(new Date());
     } catch (error) {
       console.error('Error fetching stats:', error);
       setError(error.message || 'Failed to load dashboard data');
@@ -239,14 +224,7 @@ const GeniusMoDashboard = () => {
     fetchStats();
   };
 
-  // Display loading spinner when first loading
-  if (isLoading && !lastRefreshed) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
-      </div>
-    );
-  }
+ 
 
   return (
     <div className="p-6 space-y-8 bg-dark rounded-xl">
@@ -372,30 +350,61 @@ const GeniusMoDashboard = () => {
       <div>
         <SectionHeader title="Teams By Game" />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <GameCard 
-            game="VALORANT" 
-            count={stats.teamsPerGame.valorant} 
-            color="red" 
-            icon={Activity} 
-          />
-          <GameCard 
-            game="FREE FIRE" 
-            count={stats.teamsPerGame.freeFire} 
-            color="orange" 
-            icon={Activity} 
-          />
-          <GameCard 
-            game="FC FOOTBALL" 
-            count={stats.teamsPerGame.fcFootball} 
-            color="blue" 
-            icon={Activity} 
-          />
-          <GameCard 
-            game="STREET FIGHTER" 
-            count={stats.teamsPerGame.streetFighter} 
-            color="purple" 
-            icon={Activity} 
-          />
+          {Object.entries(stats.teamsPerGame).length > 0 ? (
+            Object.entries(stats.teamsPerGame).map(([gameKey, count], index) => {
+              // Get display name by converting camelCase back to display format
+              // e.g., "freeFire" becomes "FREE FIRE"
+              const displayName = gameKey
+                // Insert a space before all uppercase letters
+                .replace(/([A-Z])/g, ' $1')
+                // Capitalize the first letter and the rest
+                .replace(/^./, (str) => str.toUpperCase())
+                .trim()
+                .toUpperCase();
+              
+              // Assign a different color to each game
+              const colors = ["red", "orange", "blue", "purple", "green", "indigo", "pink", "yellow"];
+              const color = colors[index % colors.length];
+              
+              return (
+                <GameCard 
+                  key={gameKey}
+                  game={displayName} 
+                  count={count} 
+                  color={color} 
+                  icon={Activity} 
+                />
+              );
+            })
+          ) : (
+            // Fallback to display the 4 original games if no data
+            <>
+              <GameCard 
+                game="VALORANT" 
+                count={stats.teamsPerGame.valorant || 0} 
+                color="red" 
+                icon={Activity} 
+              />
+              <GameCard 
+                game="FREE FIRE" 
+                count={stats.teamsPerGame.freeFire || 0} 
+                color="orange" 
+                icon={Activity} 
+              />
+              <GameCard 
+                game="FC FOOTBALL" 
+                count={stats.teamsPerGame.fcFootball || 0} 
+                color="blue" 
+                icon={Activity} 
+              />
+              <GameCard 
+                game="STREET FIGHTER" 
+                count={stats.teamsPerGame.streetFighter || 0} 
+                color="purple" 
+                icon={Activity} 
+              />
+            </>
+          )}
         </div>
       </div>
       
@@ -424,7 +433,36 @@ const GeniusMoDashboard = () => {
         </div>
       </div>
       
- 
+      {/* Tournament Type Distribution */}
+      <div>
+        <SectionHeader title="Tournament Types" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <StatCard
+            title="Single Elimination"
+            value={stats.tournamentsByType.singleElimination}
+            icon={TbTournament}
+            color="blue"
+          />
+          <StatCard
+            title="Double Elimination"
+            value={stats.tournamentsByType.doubleElimination}
+            icon={TbTournament}
+            color="green"
+          />
+          <StatCard
+            title="Round Robin"
+            value={stats.tournamentsByType.roundRobin}
+            icon={TbTournament}
+            color="orange"
+          />
+          <StatCard
+            title="Battle Royale"
+            value={stats.tournamentsByType.battleRoyale}
+            icon={TbTournament}
+            color="purple"
+          />
+        </div>
+      </div>
     </div>
   );
 };

@@ -160,7 +160,7 @@ const TabComponent = ({ activeTab, onTabChange, tournament,gameData }) => {
       case 'Participants':
         return <ParticipantList tournamentId={tournament.id} />;
         case 'Bracket':
-          if (tournament.status === "ongoing") {
+          if (true) {
             return <TournamentBracket 
               bracketType={tournament.bracket_type} 
               tournamentId={tournament.id}

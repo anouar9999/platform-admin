@@ -148,7 +148,7 @@ console.log()
   const totalRounds = generatedMatches.length;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-75">
+    <div className="fixed inset-0 flex items-center justify-center z-[9999999999999999999] bg-black bg-opacity-75">
       <div className="w-full max-w-7xl h-[90vh] overflow-hidden bg-secondary shadow-xl angular-cut">
         {/* Modal Header */}
         <div className="px-6 py-4 border-b border-secondary flex justify-between items-center">

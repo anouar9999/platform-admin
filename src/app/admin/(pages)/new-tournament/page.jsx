@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Calendar,
   LinkIcon,
@@ -81,6 +81,7 @@ const TournamentCreation = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [passwordProtected, setPasswordProtected] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
+  const [Games, setGames] = useState();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -105,7 +106,28 @@ const TournamentCreation = () => {
     password: '',
     image: null,
   });
-
+ useEffect(() => {
+    const fetchTournaments = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/all_games.php`);
+        const data = await response.json();
+  
+        if (data.success) {
+          setGames(data.games);
+          console.log(data.games)
+        } else {
+          throw new Error(data.message || 'Failed to fetch tournaments');
+        }
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+   
+    fetchTournaments();
+  }, []);
   
 
   const handleChange = (e) => {
@@ -115,12 +137,12 @@ const TournamentCreation = () => {
       const file = files[0];
       if (file) {
         if (file.size > 5 * 1024 * 1024) {
-          showToast.error("L'image ne doit pas dépasser 5MB");
+          showToast.error("L'image ne doit pas dépasser 5MB","error");
           return;
         }
 
         if (!['image/jpeg', 'image/png', 'image/gif'].includes(file.type)) {
-          showToast.error("Format d'image non supporté. Utilisez JPG, PNG ou GIF");
+          showToast("Format d'image non supporté. Utilisez JPG, PNG ou GIF","error");
           return;
         }
 
@@ -285,7 +307,7 @@ const TournamentCreation = () => {
                 <div className="px-8 space-y-4 ">
                 {/* Game Type */}
                 <CompetitionTypeSelector
-                  competitionTypes={competitionTypes}
+                  competitionTypes={Games}
                   selectedType={formData.competition_type}
                   onChange={handleChange}
                 />

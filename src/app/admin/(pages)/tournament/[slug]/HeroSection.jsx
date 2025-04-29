@@ -24,7 +24,55 @@ export const HeroSection = ({
   const { slug } = useParams();
   const router = useRouter();
   const { showToast } = useToast();
+// Example usage in admin.js
+async function resetTournament(tournamentId, adminId) {
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/reset-tournament.php`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        tournament_id: tournamentId,
+        admin_id: adminId
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      // Show success message
+      console.log('success', data.message);
+      window.location.reload()
+      // Refresh tournament data
+    } else {
+      // Show error message
+      console.log('error', data.error || 'Failed to reset tournament');
+    }
+  } catch (error) {
+    console.error('Error resetting tournament:', error);
+    console.log('error', 'Network error when resetting tournament');
+  }
+}
 
+// Example button in tournament management UI
+function TournamentActionButtons({ tournamentId, adminId }) {
+  return (
+    <div className="tournament-actions mt-4">
+      <button 
+        className="btn btn-danger mr-2"
+        onClick={() => {
+          if (window.confirm('Are you sure you want to reset this tournament? This will delete all matches but keep accepted participants.')) {
+            resetTournament(tournamentId, adminId);
+          }
+        }}
+      >
+        Reset Tournament
+      </button>
+      
+    </div>
+  );
+}
   const handleEdit = () => {
     router.push(`/admin/edit-tournament/${tournamentId}`);
   };
@@ -148,14 +196,15 @@ export const HeroSection = ({
           )
           .then((response) => {
             if (response.data.success) {
+              console.log('the bracket generated succesfully')
             } else {
               // Handle error case
-              console.log('Failed to load Battle Royale data. Please try again.');
+              console.log('Failed to load round robin data. Please try again.');
             }
           })
           .catch((error) => {
-            console.error('Error fetching Battle Royale data:', error);
-            console.log('An error occurred while loading Battle Royale data.');
+            console.error('Error fetching round robin data:', error);
+            console.log('An error occurred while loading round robin data.');
           });
       } else {
         // For other bracket types, just update the status
@@ -255,7 +304,7 @@ export const HeroSection = ({
               {/* Title at bottom left */}
               <motion.h1
                 className={`${
-                  gameData.game_name == 'Street Fighter' ? 'text-xl' : 'text-3xl md:text-5xl'
+                  gameData.game_name == 'Street Fighter' ? 'text-xl' : 'text-xl md:text-xl'
                 } ${GameFont(
                   gameData.game_name,
                 )} text-white drop-shadow-lg bg-gradient-to-r from-white to-white/70 text-transparent bg-clip-text mb-3`}
@@ -263,7 +312,7 @@ export const HeroSection = ({
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7, delay: 0.3 }}
               >
-                {title}
+              {title}
               </motion.h1>
 
               {/* Metadata section */}
@@ -306,6 +355,8 @@ export const HeroSection = ({
 
             {/* Right side: Action button for tournament flow */}
             <div className="flex items-end">
+              <TournamentActionButtons tournamentId={tournamentId}/>
+              
               {tournament && tournament.status && getNextStatusAction(tournament.status) && (
                 <motion.button
                   className={`bg-primary angular-cut text-white px-4 py-2 font-medium flex items-center gap-2 shadow-lg`}

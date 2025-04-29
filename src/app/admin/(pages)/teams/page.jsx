@@ -116,7 +116,9 @@ const TeamCard = ({ team, onEdit, onDelete }) => {
       
     >
  
-      
+ <div className="absolute inset-0 bg-gradient-to-t from-dark via-transparent to-transparent"></div>
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-t from-dark/85 to-transparent"></div>
+
 
       {/* Banner with game image */}
       <div className="h-24 relative overflow-hidden">
@@ -138,10 +140,9 @@ const TeamCard = ({ team, onEdit, onDelete }) => {
   }}
 >
   {/* Dark overlay */}
-  <div 
-    className="absolute inset-0 bg-black/50 z-0"
-    style={{ mixBlendMode: 'multiply' }}
-  ></div>
+  <div className="absolute inset-0 bg-gradient-to-t from-dark via-transparent to-transparent"></div>
+        <div className="absolute  left-0 top-0 h-1 bg-gradient-to-t from-dark/85 to-transparent"></div>
+
   
   {/* Content (on top of the overlay) */}
   <span className="relative z-10 text-white">
@@ -154,7 +155,6 @@ const TeamCard = ({ team, onEdit, onDelete }) => {
           <motion.button
             onClick={() => onEdit(team)}
             className="p-1.5 rounded-lg backdrop-blur-md"
-            whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             
           >
@@ -163,7 +163,6 @@ const TeamCard = ({ team, onEdit, onDelete }) => {
           <motion.button
             onClick={() => onDelete(id)}
             className="p-1.5 rounded-lg backdrop-blur-md"
-            whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             style={{ 
               border: '1px solid rgba(239, 68, 68, 0.3)',
@@ -181,7 +180,6 @@ const TeamCard = ({ team, onEdit, onDelete }) => {
         <div className="flex items-start">
           <motion.div 
             className="w-16 h-16 rounded-lg overflow-hidden shadow-lg -mt-12 mr-3 flex-shrink-0"
-            whileHover={{ scale: 1.05 }}
            
           >
             {team.logo ? (
@@ -191,11 +189,14 @@ const TeamCard = ({ team, onEdit, onDelete }) => {
                 <span className="text-xl font-bold" >{name.charAt(0).toUpperCase()}</span>
               </div>
             )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-dark via-transparent to-transparent"></div>
+        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-t from-dark/85 to-transparent"></div>
+
           </motion.div>
 
           {/* Team name and badges */}
           <div className="flex-1">
-            <h3 className="text-lg font-custom tracking-widest text-white leading-tight truncate">{name}bb</h3>
+            <h3 className="text-lg font-custom tracking-widest text-white leading-tight truncate">{name}</h3>
             
             {/* Tier and division badges */}
             <div className="flex items-center mt-1.5 gap-2">

@@ -121,6 +121,8 @@ export const HeroSection = ({
       // Special handling for "Start Tournament" based on bracket type
       if (tournament.bracket_type === 'Battle Royale') {
         // Fetch the Battle Royale leaderboard data first to check if it's properly set up
+        updateTournamentStatus('ongoing');
+
         axios
           .get(
             `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/get_battle_royale_leaderboard.php?tournament_id=${tournamentId}`,
@@ -138,6 +140,8 @@ export const HeroSection = ({
           });
       } else if (tournament.bracket_type === 'Round Robin') {
         // Navigate to Round Robin setup
+        updateTournamentStatus('ongoing');
+
         axios
           .post(
             `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/tournament_round_robin.php?tournament_id=${tournamentId}`,

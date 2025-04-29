@@ -192,7 +192,7 @@ const TournamentPage = () => {
       if (data.success) {
         await generateInitialMatches(tournament.id);
 
-        setGlowColor(newStatus === 'En cours' ? 'green' : 'red');
+        setGlowColor(newStatus === 'ongoing' ? 'green' : 'red');
         setShowGlow(true);
         setTournament({ ...tournament, status: newStatus });
       }

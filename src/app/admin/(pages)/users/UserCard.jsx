@@ -71,10 +71,14 @@ const ProfileCard = ({user, onEdit, onDelete }) => {
     
     return (
       <div className="flex items-center space-x-1 group relative">
+        
         <div className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 w-40 bg-gray-900 text-xs text-gray-200 py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none shadow-lg">
           Engagement Level: {engagement}/5
           <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-gray-900"></div>
         </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-dark via-transparent to-transparent"></div>
+        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-t from-dark/85 to-transparent"></div>
+
         {colors.map((color, index) => (
           <motion.div 
             key={index} 
@@ -141,6 +145,9 @@ const ProfileCard = ({user, onEdit, onDelete }) => {
         boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.4)",
       }}
     >
+        <div className="absolute inset-0 bg-gradient-to-t from-dark via-transparent to-transparent"></div>
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-t from-dark/85 to-transparent"></div>
+
       <div className="relative p-5 z-10">
         {/* Top section with avatar and actions */}
         <div className="flex justify-between items-center mb-4">
@@ -205,7 +212,7 @@ const ProfileCard = ({user, onEdit, onDelete }) => {
         </div>
         
         {/* User information */}
-        <div className="mb-6">
+        <div className="mb-2">
           <div className="flex items-center mb-1">
             <h3 className="text-xl font-bold text-white mr-2 uppercase font-valorant">{username}</h3>
             {is_verified && 
@@ -213,7 +220,7 @@ const ProfileCard = ({user, onEdit, onDelete }) => {
             }
           </div>
           
-          <div className="flex items-center text-sm text-gray-300 mb-2">
+          <div className="flex items-center text-sm text-gray-300 ">
             <Mail className="w-4 h-4 mr-2 text-gray-400" />
             <p className="truncate" title={email}>{email}</p>
           </div>
@@ -228,8 +235,8 @@ const ProfileCard = ({user, onEdit, onDelete }) => {
         </div>
         
         {/* User stats */}
-        <div className="space-y-4">
-          <div className="flex flex-wrap gap-2 items-center">
+        <div className="">
+          <div className="flex flex-wrap  items-center">
             <motion.span 
               className={`px-3 py-1  rounded-full text-xs flex items-center capitalize`}
               whileHover={{ scale: 1.05 }}

@@ -8,10 +8,10 @@ import * as Yup from 'yup';
 
 export default function Login() {
   const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('Admin@00');
+  const [email, setEmail] = useState('admin@gmail.com');
   const [fullName, setFullName] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState('');
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
@@ -302,7 +302,7 @@ export default function Login() {
               {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
             </div>
 
-            {!isAdminSetup && (
+            {/* {!isAdminSetup && (
               <div className="flex items-center">
                 <input
                   id="remember-me"
@@ -316,7 +316,7 @@ export default function Login() {
                   Keep me signed in
                 </label>
               </div>
-            )}
+            )} */}
 
             <button
               type="submit"

@@ -228,7 +228,7 @@ const TournamentCard = ({
       case 'Free Fire':
         return 'font-free-fire';
       case 'Street Fighter':
-        return 'font-street-fighter';
+        return 'font-street-fighter font-[2px]';
       case 'Fc Football':
         return 'font-ea-football';
       default:
@@ -337,48 +337,49 @@ const TournamentCard = ({
             }`}
           ></div>
 
-
           {/* Game type badge with enhanced styling */}
-          <div 
-  className="absolute bottom-0 left-0 px-4 py-1 text-xs flex items-center  overflow-hidden "
-  style={{ 
-    backgroundImage: `url(${game.image})`,
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    backdropFilter: 'blur(8px)'
-  }}
->
-  {/* Dark overlay */}
-  <div 
-    className="absolute inset-0 bg-black/50 z-0"
-    style={{ mixBlendMode: 'multiply' }}
-  ></div>
-  
-  {/* Content (on top of the overlay) */}
-  <span className={`${fontClass}  ${game.name == 'Street Fighter'
-                ? 'text-[9px] tracking-widest'
-                : ''} tracking-widest relative z-10 text-white`}>
-    {game.name}
-  </span>
-</div>
+          <div
+            className="absolute bottom-0 right-0 px-2 py-0.5 text-xs flex items-center  overflow-hidden "
+            style={{
+              backgroundImage: `url(${game.image})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backdropFilter: 'blur(8px)',
+            }}
+          >
+            {/* Dark overlay */}
+            <div
+              className="absolute inset-0 bg-black/50 z-0"
+              style={{ mixBlendMode: 'multiply' }}
+            ></div>
+
+            {/* Content (on top of the overlay) */}
+            <span
+              className={`${fontClass}  ${
+                game.name == 'Street Fighter' ? 'text-[7px] tracking-widest' : ''
+              } tracking-widest relative z-10 text-white`}
+            >
+              {game.name}
+            </span>
+          </div>
         </div>
 
         {/* Card content with more details */}
         <div className="p-3 flex-1 flex flex-col bg-secondary angular-cut">
           {/* Date and duration */}
-          <div className="flex justify-between items-center mb-1">
+          {/* <div className="flex justify-between items-center mb-1">
             <div className="text-gray-400 text-xs font-mono flex items-center">
               <Calendar className="w-3 h-3 text-orange-mge mr-1" />
               {formatCardDate(startDateObj)}
             </div>
             <div className="text-gray-400 text-xs font-medium">{getTournamentDuration()} days</div>
-          </div>
+          </div> */}
 
           {/* Tournament title with improved styling */}
           <h3
             className={`text-white ${
               game.name == 'Street Fighter'
-                ? 'text-[10px] tracking-widest'
+                ? 'text-[9px] tracking-widest'
                 : 'text-xl tracking-wider'
             }    ${fontClass} mb-1 line-clamp-1 group-hover:text-orange-mge transition-colors duration-200`}
           >
@@ -465,20 +466,20 @@ const TournamentCard = ({
 
           {/* Registration info if in registration phase */}
           {status === 'registration_open' && registrationEndObj && (
-            <div className="flex items-center mb-2 text-yellow-400 text-xs font-medium">
+            <div className="flex items-center  text-yellow-400 text-xs font-medium">
               <UserPlus className="w-3 h-3 mr-1" />
               <span>Registration closes: {formatDate(registrationEndObj).split(',')[1]}</span>
             </div>
           )}
 
           {/* Prize pool and join button with hover effect */}
-          <div className="flex items-center justify-end bg- -mx-3 -mb-3 py-2 px-3 border-t border-gray-700/30 mt-auto group-hover:bg-orange-mge/20 transition-colors duration-300">
+          <div className=" flex items-center justify-end  -mx-3 -mb-3 py-2 px-3  mt-auto group-hover:bg-orange-mge/20 transition-colors duration-300">
             <div className="flex flex-col items-end">
               <div className="flex items-center">
                 <div className="text-orange-mge text-[17px] font-custom">{prizePool} MAD</div>
                 {/* <Trophy className="w-4 h-4 text-orange-mge ml-1" /> */}
               </div>
-              <div className="text-xs text-gray-300 ">Prize Pool</div>
+              <div className="text-xs font-mono text-gray-300 ">Prize Pool</div>
             </div>
           </div>
         </div>

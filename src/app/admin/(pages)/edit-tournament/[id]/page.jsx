@@ -6,7 +6,7 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import PrizePoolInput from '../../new-tournament/numberInput';
 import ParticipantInput from '../../new-tournament/participantInput';
-import TeamSizeInput from '../../new-tournament/TeamInput'
+import TeamSizeInput from '../../new-tournament/TeamInput';
 import { useToast } from '@/utils/ToastProvider';
 import TransparentLoader from '../../tournament/[slug]/Loader';
 import LoadingOverlay from '../../tournament/[slug]/Loading';
@@ -65,7 +65,7 @@ const TournamentEdit = () => {
     nombre_maximum: '',
     start_date: '',
     end_date: '',
-    status: 'registration_open',
+    status: '',
     description_des_qualifications: '',
     rules: '',
     prize_pool: '',
@@ -74,8 +74,6 @@ const TournamentEdit = () => {
     type_de_jeu: '',
     image: '',
   });
-
-
 
   const statusOptions = ['registration_open', 'En cours', 'Terminé', 'Annulé'];
 
@@ -90,7 +88,7 @@ const TournamentEdit = () => {
         }
         const data = await response.json();
         if (data.success) {
-          console.log(data)
+          console.log(data);
           const formattedData = {
             ...data.data,
             start_date: formatDate(data.data.start_date),
@@ -102,8 +100,7 @@ const TournamentEdit = () => {
         }
       } catch (error) {
         console.error('Error fetching tournament data:', error);
-        showToast('Failed to load tournament data. Please try again.', "error", 1500);
-       
+        showToast('Failed to load tournament data. Please try again.', 'error', 1500);
       }
     };
 
@@ -122,13 +119,13 @@ const TournamentEdit = () => {
       const file = files[0];
       if (file) {
         if (file.size > 5 * 1024 * 1024) {
-          showToast("L'image ne doit pas dépasser 5MB", "error", 5000);
-        
+          showToast("L'image ne doit pas dépasser 5MB", 'error', 5000);
+
           return;
         }
 
         if (!['image/jpeg', 'image/png', 'image/gif'].includes(file.type)) {
-          showToast("Format d'image non supporté. Utilisez JPG, PNG ou GIF", "error", 5000);
+          showToast("Format d'image non supporté. Utilisez JPG, PNG ou GIF", 'error', 5000);
           return;
         }
 
@@ -142,48 +139,52 @@ const TournamentEdit = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-        setLoading(true);
+      setLoading(true);
 
-        // Log the data being sent
-        console.log('Sending data:', formData);
+      // Log the data being sent
+      console.log('Sending data:', formData);
 
-        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/edit_tournament.php`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                // Add this if you're getting CORS errors
-                'Accept': 'application/json',
-            },
-            body: JSON.stringify({
-                ...formData,
-                // Ensure dates are in the correct format
-                start_date: formData.start_date ? new Date(formData.start_date).toISOString().split('T')[0] : null,
-                end_date: formData.end_date ? new Date(formData.end_date).toISOString().split('T')[0] : null,
-            }),
-        });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/edit_tournament.php`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            // Add this if you're getting CORS errors
+            Accept: 'application/json',
+          },
+          body: JSON.stringify({
+            ...formData,
+            // Ensure dates are in the correct format
+            start_date: formData.start_date
+              ? new Date(formData.start_date).toISOString().split('T')[0]
+              : null,
+            end_date: formData.end_date
+              ? new Date(formData.end_date).toISOString().split('T')[0]
+              : null,
+          }),
+        },
+      );
 
-        const data = await response.json();
-        console.log('Response:', data);
+      const data = await response.json();
+      console.log('Response:', data);
 
-        if (data.success) {
-            showToast(data.message, "success", 3000);
-            setTimeout(() => {
-                router.push('/admin/tournaments');
-            }, 1500);
-        } else {
-            showToast(data.message || 'Error updating tournament', "error", 3000);
-        }
+      if (data.success) {
+        showToast(data.message, 'success', 3000);
+        setTimeout(() => {
+          router.push('/admin/tournaments');
+        }, 1500);
+      } else {
+        showToast(data.message || 'Error updating tournament', 'error', 3000);
+      }
     } catch (error) {
-        console.error('Error:', error);
-        showToast('An error occurred while updating the tournament', "error", 3000);
+      console.error('Error:', error);
+      showToast('An error occurred while updating the tournament', 'error', 3000);
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
-};
-  if (loading)
-    return (
-      <LoadingOverlay text="Submiting Changes..." />
-    );
+  };
+  if (loading) return <LoadingOverlay text="Submiting Changes..." />;
   return (
     <div className="text-gray-300 min-h-screen p-4">
       <div className="mx-auto">
@@ -192,8 +193,10 @@ const TournamentEdit = () => {
 
         <div className="space-y-8">
           {/* Competition Type Selection */}
-          <CompetitionTypeSelector competitionTypes={competitionTypes} selectedType={formData.competition_type}  />
-        
+          <CompetitionTypeSelector
+            competitionTypes={competitionTypes}
+            selectedType={formData.competition_type}
+          />
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Basic Information */}
@@ -263,7 +266,6 @@ const TournamentEdit = () => {
             {/* Participants and Prize Pool */}
             <div className="grid grid-cols-3 gap-6">
               {formData.participation_type === 'team' ? (
-       
                 <TeamSizeInput value={formData.nombre_maximum} onChange={handleChange} />
               ) : (
                 <ParticipantInput value={formData.nombre_maximum} onChange={handleChange} />
@@ -281,7 +283,6 @@ const TournamentEdit = () => {
                   <option>Double Elimination</option>
                   <option>Round Robin</option>
                   <option>Battle Royale</option>
-
                 </select>
               </div>
 

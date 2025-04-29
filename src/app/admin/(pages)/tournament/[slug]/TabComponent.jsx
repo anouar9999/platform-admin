@@ -87,11 +87,11 @@ const TabComponent = ({ activeTab, onTabChange, tournament,gameData }) => {
 
                       {/* Content Layer */}
                       <div className="relative z-10 p-4 md:p-6">
-                        <div className="flex flex-col md:flex-row gap-4 md:gap-6 items-start">
+                        <div className="flex flex-col md:flex-row gap-3 md:gap-6 items-start">
                           {/* Left side - Tournament Info */}
                           <div className="w-full md:w-full">
                             {/* Info Cards */}
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-10">
                               <InfoCard
                                 icon={<DollarSign className="w-4 h-4 md:w-5 md:h-5 text-primary" />}
                                 value={`${tournament.prize_pool} DH`}
@@ -118,7 +118,7 @@ const TabComponent = ({ activeTab, onTabChange, tournament,gameData }) => {
                                 label="Participation type"
                               />
                               <InfoCard
-                                
+                                icon={<img src={gameData.game_image} width={'50'} />}
                                 value={gameData.game_name}
                                 label="Tournament Game"
                               />
@@ -133,7 +133,7 @@ const TabComponent = ({ activeTab, onTabChange, tournament,gameData }) => {
 
               {/* About Section - Now full width with dark background */}
               <div className="w-full text-gray-400 rounded-lg p-3 md:p-4">
-                <h3 className="font-custom text-primary leading-tight uppercase tracking-wider text-xl md:text-3xl mb-2 md:mb-4 flex items-center">
+                <h3 className="font-custom text-primary leading-tight uppercase tracking-wider text-lg md:text-3xl mb-2 md:mb-4 flex items-center">
                   <AlertCircle className="w-4 h-4 md:w-5 md:h-5 mr-2" />
                   About the tournament
                 </h3>
@@ -192,9 +192,9 @@ const TabComponent = ({ activeTab, onTabChange, tournament,gameData }) => {
   };
 
   const TabButton = ({ tab }) => (
-    <div className="relative inline-block px-1 md:px-2">
+    <div className="relative  inline-block px-4 md:px-4">
       <svg
-        width="100"
+        width="120"
         height="32"
         viewBox="0 0 100 32"
         fill="none"
@@ -208,10 +208,10 @@ const TabComponent = ({ activeTab, onTabChange, tournament,gameData }) => {
       </svg>
       <button
         onClick={() => onTabChange(tab)}
-        className={`absolute inset-0 flex items-center justify-center text-xs md:text-sm font-pilot 
-          ${activeTab === tab ? 'text-white' : 'text-gray-400'}`}
+        className={`absolute inset-0 flex items-center justify-center text-lg md:text-lg px-2 
+          ${activeTab === tab ? 'text-white' : 'text-white/55'}`}
       >
-        <span>{tab}</span>
+        <span className='font-free-fire tracking-widest'>{tab}</span>
       </button>
     </div>
   );
@@ -219,7 +219,7 @@ const TabComponent = ({ activeTab, onTabChange, tournament,gameData }) => {
   return (
     <div className="text-gray-300">
       {/* Desktop navigation */}
-      <div className="hidden md:flex space-x-2 lg:space-x-4 mb-4">
+      <div className="hidden ml-8 md:flex space-x-10 lg:space-x-6 mb-6">
         {tabs.map((tab) => (
           <TabButton key={tab} tab={tab} />
         ))}

@@ -772,10 +772,7 @@ const BattleRoyale = ({ tournamentId }) => {
           } stats updated successfully!`,
         );
 
-        // Refresh standings after update
-        if (refreshStandings) {
-          refreshStandings();
-        }
+       
       } else {
         throw new Error(response.data.message || 'Failed to update stats');
       }

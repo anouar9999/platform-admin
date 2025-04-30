@@ -128,7 +128,7 @@ const ParticipantInput = ({ value, onChange }) => {
             </div>
           ) : (
             <div className="mt-2 text-yellow-400">
-              Certains participants bénéficieront d'exemptions au premier tour
+              Certains participants bénéficieront d exemptions au premier tour
             </div>
           )}
         </div>

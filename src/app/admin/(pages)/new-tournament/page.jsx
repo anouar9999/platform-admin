@@ -482,7 +482,7 @@ const TournamentCreation = () => {
         <div className="absolute left-0 right-0 top-0 flex items-center">
           <div className="flex-grow h-px bg-gradient-to-r from-transparent via-gray-600 to-transparent"></div>
           <div className="px-3 text-gray-500 text-xs uppercase tracking-wider font-medium bg-gray-900/20 rounded-full backdrop-blur-sm">
-            Période d'inscription
+            Période d inscription
           </div>
           <div className="flex-grow h-px bg-gradient-to-r from-transparent via-gray-600 to-transparent"></div>
         </div>

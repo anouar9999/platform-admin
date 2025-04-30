@@ -13,7 +13,7 @@ const RegistrationPeriodSelector = ({ startDate, endDate, onChange }) => {
   return (
     <div className="relative">
       <label className={`absolute text-[12pt] font-custom text-gray-300 leading-tight tracking-widest -translate-y-7 top-5 left-4 text-xs rounded-md bg-[#181818] px-2 z-10`}>
-        Période d'Inscription
+        Période d Inscription
       </label>
       <div className="grid grid-cols-2 gap-4 bg-secondary rounded-xl angular-cut p-3 pt-5">
         <div className="relative">

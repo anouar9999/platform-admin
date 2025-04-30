@@ -227,10 +227,10 @@ const ProfileCard = ({user, onEdit, onDelete }) => {
           
           {bio ?(
             <div className="mt-3 text-sm text-gray-400 italic border-l-2 border-gray-700 pl-3">
-              "{truncateBio(bio)}"
+              {truncateBio(bio)}
             </div>
           ) :  <div className="mt-3 text-sm text-gray-400 italic border-l-2 border-gray-700 pl-3">
-          "{truncateBio("no bio")}"
+          {truncateBio("no bio")}
         </div>}
         </div>
         

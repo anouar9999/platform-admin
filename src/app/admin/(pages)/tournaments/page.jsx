@@ -120,7 +120,9 @@ const LeagueOfLegendsProfile = () => {
           setFilteredTournaments(data.tournaments);
           console.log(data.tournaments)
         } else {
+          console.log(data)
           throw new Error(data.message || 'Failed to fetch tournaments');
+         
         }
       } catch (err) {
         setError(err.message);

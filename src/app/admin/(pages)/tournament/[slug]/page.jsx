@@ -283,7 +283,7 @@ const TournamentPage = () => {
       <div
         className={`transition-all duration-300 gap-2 ease-in-out ${
           activeTab !== 'Overview'
-            ? 'lg:w-full lg:opacity-0 lg:overflow-hidden'
+            ? 'lg:w-full lg:opacity-0 lg:overflow-hidden fixed'
             : 'lg:w-full lg:opacity-100'
         }`}
       >

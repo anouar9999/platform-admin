@@ -219,7 +219,7 @@ const TabComponent = ({ activeTab, onTabChange, tournament,gameData }) => {
   return (
     <div className="text-gray-300">
       {/* Desktop navigation */}
-      <div className="hidden ml-8 md:flex space-x-10 lg:space-x-6 mb-6">
+      <div className=" hidden ml-8  md:flex space-x-10 lg:space-x-6 mb-6">
         {tabs.map((tab) => (
           <TabButton key={tab} tab={tab} />
         ))}
@@ -258,7 +258,7 @@ const TabComponent = ({ activeTab, onTabChange, tournament,gameData }) => {
         )}
       </div>
 
-      <div className=" p-3 md:p-6 rounded-lg">{renderTabContent()}</div>
+      <div className="  rounded-lg">{renderTabContent()}</div>
     </div>
   );
 };

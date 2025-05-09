@@ -5,9 +5,6 @@ import {
   X,
   Filter,
   ChevronDown,
-  Calendar,
-  Trophy,
-  Users,
   Star,
   AlertCircle,
 } from 'lucide-react';
@@ -114,15 +111,14 @@ const LeagueOfLegendsProfile = () => {
         setIsLoading(true);
         const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/tournaments.php`);
         const data = await response.json();
-  
+
         if (data.success) {
           setTournaments(data.tournaments);
           setFilteredTournaments(data.tournaments);
-          console.log(data.tournaments)
+          console.log(data.tournaments);
         } else {
-          console.log(data)
+          console.log(data);
           throw new Error(data.message || 'Failed to fetch tournaments');
-         
         }
       } catch (err) {
         setError(err.message);
@@ -130,7 +126,7 @@ const LeagueOfLegendsProfile = () => {
         setIsLoading(false);
       }
     };
-   
+
     fetchTournaments();
   }, []);
 
@@ -264,7 +260,7 @@ const LeagueOfLegendsProfile = () => {
                 maxParticipants={tournament.max_participants}
                 bracketType={tournament.bracket_type}
                 matchFormat={tournament.match_format}
-                gameName={tournament.game.name }
+                gameName={tournament.game.name}
                 image={tournament.featured_image}
                 prizePool={tournament.prize_pool}
                 slug={tournament.slug}

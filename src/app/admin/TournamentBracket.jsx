@@ -2,13 +2,14 @@ import React from 'react';
 import MultiGroupRoundRobinTournament from './components/brackets/round_robin';
 import BattleRoyale from './components/brackets/BattleRoyal';
 
+import SingleEliminationBracket from './components/brackets/SingleEliminationBracket';
 
 const TournamentBracket = ({ bracketType, tournamentId }) => {
   // Render the appropriate bracket component based on the bracket type
   const renderBracket = () => {
     switch (bracketType?.toLowerCase()) {
-      // case 'single elimination':
-      //   return <SingleEliminationBracket data={tournamentId} />;
+      case 'single elimination':
+        return <SingleEliminationBracket data={tournamentId} />;
       
       // case 'double elimination':
       //   return <DoubleEliminationBracket data={tournamentId} />;

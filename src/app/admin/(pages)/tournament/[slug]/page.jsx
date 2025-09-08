@@ -308,7 +308,12 @@ const TournamentPage = () => {
           activeTab !== 'Overview' ? 'lg:w-full' : 'lg:w-full'
         }`}
       >
-        <TabComponent activeTab={activeTab} onTabChange={setActiveTab} tournament={tournament}  gameData={gameData}/>
+        <TabComponent
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          tournament={tournament}
+          gameData={gameData}
+        />
       </div>
     </div>
   );

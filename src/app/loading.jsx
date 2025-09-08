@@ -16,7 +16,7 @@ import Image from "next/image";
         {/* Logo Section */}
         <div className="mb-10 opacity-90 hover:opacity-100 transition-opacity duration-300 ">
           <Image
-            src="https://moroccogamingexpo.ma/wp-content/uploads/2024/02/Logo-MGE-2025-white.svg"
+            src="/images/logo-gamius-white.png"
             alt="Brand Logo"
             width={350}
             height={100}

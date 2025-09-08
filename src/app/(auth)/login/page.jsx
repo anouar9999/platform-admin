@@ -203,7 +203,7 @@ export default function Login() {
         <div className="space-y-4 max-w-xl">
           <div className="mb-6 w-56">
             <Image
-              src="https://moroccogamingexpo.ma/wp-content/uploads/2024/02/Logo-MGE-2025-white.svg"
+              src="/images/logo-gamius-white.png"
               alt="Gaming Expo"
               width={220}
               height={40}

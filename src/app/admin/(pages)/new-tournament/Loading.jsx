@@ -81,7 +81,7 @@ const LoadingOverlay = ({ text }) => {
           <img 
             src='/images/logo-gamius-white.png' 
             className="w-64 h-64 z-10" 
-            alt="Morocco Gaming Expo 2025" 
+            alt="Gamius Logo" 
           />
         </div>
         {/* Text with animated dots */}

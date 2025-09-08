@@ -10,6 +10,7 @@ import TeamSizeInput from '../../new-tournament/TeamInput';
 import { useToast } from '@/utils/ToastProvider';
 import LoadingOverlay from '../../tournament/[slug]/Loading';
 import CompetitionTypeSelector from './CompetitionType';
+export const runtime = 'edge';
 
 const ParticipationTypeToggle = ({ value, onChange, disabled }) => {
   const types = [

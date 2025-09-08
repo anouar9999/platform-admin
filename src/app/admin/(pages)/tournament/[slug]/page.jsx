@@ -8,6 +8,7 @@ import TransparentLoader from './Loader';
 import { useToast } from '@/utils/ToastProvider';
 import TabComponent from './TabComponent';
 import { formatDate } from '@/utils/helpers';
+export const runtime = 'edge';
 
 const TournamentPage = () => {
   const [activeTab, setActiveTab] = useState('Overview');

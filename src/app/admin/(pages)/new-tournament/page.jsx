@@ -309,7 +309,7 @@ const TournamentCreationSteps = () => {
             <div className="* space-x-3 mb-16">
               <h3 className="text-3xl text-white  font-custom tracking-wider">
                 {' '}
-                let's start with Basic Information
+                let s start with Basic Information
               </h3>
               <p className="text-gray-400 text-sm">
                 Choisissez un nom accrocheur pour votre tournoi
@@ -355,7 +355,7 @@ const TournamentCreationSteps = () => {
           <div className="space-y-6">
             <div className="space-x-3 mb-16">
               <h3 className="text-3xl text-white font-custom tracking-wider">
-                let's start with Basic Information
+                let s start with Basic Information
               </h3>
               <p className="text-gray-400 text-sm">
                 Choisissez un nom accrocheur pour votre tournoi
@@ -445,7 +445,7 @@ const TournamentCreationSteps = () => {
             <div className="space-y-4">
               <div className="space-x-3 mb-16">
                 <h3 className="text-3xl text-white font-custom tracking-wider">
-                  let's start with Basic Information
+                  let s start with Basic Information
                 </h3>
                 <p className="text-gray-400 text-sm">
                   Choisissez un nom accrocheur pour votre tournoi
@@ -567,7 +567,7 @@ const TournamentCreationSteps = () => {
           <div className="space-y-8">
             <div className="space-x-3 mb-16">
               <h3 className="text-3xl text-white font-custom tracking-wider">
-                let's start with Basic Information
+                let s start with Basic Information
               </h3>
               <p className="text-gray-400 text-sm">
                 Choisissez un nom accrocheur pour votre tournoi

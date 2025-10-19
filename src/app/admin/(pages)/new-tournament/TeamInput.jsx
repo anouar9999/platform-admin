@@ -87,7 +87,7 @@ const TeamSizeInput = React.forwardRef(({ value, onChange, name, competitionType
   return (
     <div className="space-y-4">
       <label className="block text-sm font-medium text-gray-300 ">
-        Nombre Maximum d'Équipes <span className="text-red-500">*</span>
+        Nombre Maximum d Équipes <span className="text-red-500">*</span>
       </label>
       
       <div className="relative">

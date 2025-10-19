@@ -471,7 +471,7 @@ const GameModal = ({ game, onClose, onSave }) => {
 
             <div>
               <label className="block text-slate-400 text-sm mb-2 font-circular-web">
-                URL de l'image
+                URL de l image
               </label>
               <input
                 type="url"

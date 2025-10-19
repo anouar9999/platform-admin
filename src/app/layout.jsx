@@ -27,7 +27,9 @@ export default function RootLayout({ children }) {
         <QueryClientProvider client={queryClient}>
           <GlowEffectContextProvider>
             <ToastProvider>
-              <MyApp children={children} />
+              <MyApp>
+                {children}
+                </MyApp>
             </ToastProvider>
           </GlowEffectContextProvider>
         </QueryClientProvider>

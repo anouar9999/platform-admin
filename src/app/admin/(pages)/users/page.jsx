@@ -245,7 +245,7 @@ const PlayerDetailsModal = ({ player, onClose, onEdit, onDelete }) => {
               <div className="flex items-center gap-2">
                 <Calendar className="text-slate-400" size={16} />
                 <div>
-                  <p className="text-slate-400 text-xs font-circular-web">Date d'inscription</p>
+                  <p className="text-slate-400 text-xs font-circular-web">Date d inscription</p>
                   <p className="text-white font-circular-web">
                     {new Date(player.created_at).toLocaleDateString('fr-FR')}
                   </p>

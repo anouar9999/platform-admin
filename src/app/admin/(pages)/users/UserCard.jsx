@@ -176,7 +176,7 @@ const PlayerCard = ({ player, onEdit, onDelete, onView }) => {
           {player.bio && (
             <div className="mb-4">
               <p className="text-gray-400 text-xs font-circular-web line-clamp-2 italic">
-                "{player.bio}"
+              {player.bio}
               </p>
             </div>
           )}

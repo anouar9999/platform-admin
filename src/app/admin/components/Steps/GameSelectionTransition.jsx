@@ -9,7 +9,7 @@ const GameSelectionTransition = ({ control, errors, watch }) => {
             <div className="* space-x-3 mb-16">
               <h3 className="text-3xl text-white  font-custom tracking-wider">
                 {' '}
-                let's start with Basic Information
+                let s start with Basic Information
               </h3>
               <p className="text-gray-400 text-sm">
                 Choisissez un nom accrocheur pour votre tournoi

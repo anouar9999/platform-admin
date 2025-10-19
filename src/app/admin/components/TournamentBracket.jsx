@@ -9,7 +9,8 @@ const TournamentBracket = ({ bracketType, tournamentId }) => {
   const renderBracket = () => {
     switch (bracketType?.toLowerCase()) {
       case 'single elimination':
-        return <SingleEliminationBracket data={tournamentId} />;
+        return <SingleEliminationBracket data={tournamentId}       tournamentId={17}  // Pass your tournament ID
+ />;
       
       // case 'double elimination':
       //   return <DoubleEliminationBracket data={tournamentId} />;

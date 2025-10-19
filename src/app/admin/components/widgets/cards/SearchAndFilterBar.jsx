@@ -25,7 +25,7 @@ const SearchAndFilterBar = ({
       <div className="relative filter-dropdown">
         <button
           onClick={() => setShowFilter(!showFilter)}
-          className="px-4 py-3 bg-secondary backdrop-blur-sm angular-cut flex items-center gap-2 
+          className="px-4 py-3 bg-dark backdrop-blur-sm angular-cut flex items-center gap-2 
             hover:bg-gray-700/80  transition-all"
         >
           <Filter className="w-5 h-5 text-gray-400" />
@@ -37,7 +37,7 @@ const SearchAndFilterBar = ({
         </button>
 
         {showFilter && (
-          <div className="absolute right-0 mt-2 w-48 py-2 bg-gray-800/95 backdrop-blur-sm rounded-lg 
+          <div className="absolute right-0 mt-2 w-48 py-2 bg-dark/95 backdrop-blur-sm rounded-lg 
             shadow-xl border border-gray-700/50 z-50"
           >
             {['all', 'pending', 'accepted', 'rejected'].map((status) => {

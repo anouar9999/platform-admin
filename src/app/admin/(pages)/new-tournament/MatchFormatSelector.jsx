@@ -1,15 +1,5 @@
 import React, { useState } from 'react';
 
-/**
- * Enhanced Match Format Selector component with improved UI/UX
- * 
- * @param {Object} props Component props
- * @param {string} props.value Current selected value
- * @param {Function} props.onChange Function called when selection changes
- * @param {string} props.game Game type to determine format options
- * @param {string} props.name Optional field name (defaults to 'match_format')
- * @param {string} props.className Optional additional CSS classes
- */
 const MatchFormatSelector = ({ 
   value, 
   onChange, 
@@ -21,7 +11,31 @@ const MatchFormatSelector = ({
   
   // Different match format options based on game type
   const formatOptions = {
-    
+    'League of Legends': [
+      { id: 'Bo1', label: 'Best of 1', description: 'Match unique', icon: '🎮' },
+      { id: 'Bo3', label: 'Best of 3', description: 'Meilleur des trois matchs', icon: '🏅' },
+      { id: 'Bo5', label: 'Best of 5', description: 'Meilleur des cinq matchs', icon: '🏆' }
+    ],
+    'Counter-Strike 2': [
+      { id: 'Bo1', label: 'Best of 1', description: 'Match unique', icon: '🎮' },
+      { id: 'Bo3', label: 'Best of 3', description: 'Meilleur des trois matchs', icon: '🏅' },
+      { id: 'Bo5', label: 'Best of 5', description: 'Meilleur des cinq matchs', icon: '🏆' }
+    ],
+    'Valorant': [
+      { id: 'Bo1', label: 'Best of 1', description: 'Match unique', icon: '🎮' },
+      { id: 'Bo3', label: 'Best of 3', description: 'Meilleur des trois matchs', icon: '🏅' },
+      { id: 'Bo5', label: 'Best of 5', description: 'Meilleur des cinq matchs', icon: '🏆' }
+    ],
+    'FIFA 24': [
+      { id: 'Bo1', label: 'Best of 1', description: 'Match unique', icon: '⚽' },
+      { id: 'Bo3', label: 'Best of 3', description: 'Meilleur des trois matchs', icon: '🏅' }
+    ],
+    'Rocket League': [
+      { id: 'Bo1', label: 'Best of 1', description: 'Match unique', icon: '🚗' },
+      { id: 'Bo3', label: 'Best of 3', description: 'Meilleur des trois matchs', icon: '🏅' },
+      { id: 'Bo5', label: 'Best of 5', description: 'Meilleur des cinq matchs', icon: '🏆' },
+      { id: 'Bo7', label: 'Best of 7', description: 'Meilleur des sept matchs', icon: '👑' }
+    ],
     'default': [
       { id: 'Bo1', label: 'Best of 1', description: 'Match unique', icon: '🎮' },
       { id: 'Bo3', label: 'Best of 3', description: 'Meilleur des trois matchs', icon: '🏅' },
@@ -30,10 +44,14 @@ const MatchFormatSelector = ({
   };
 
   // Use game-specific options if available, otherwise default
-  const options = game && formatOptions[game] ? formatOptions[game] : formatOptions.default;
+  const options = (game && formatOptions[game]) ? formatOptions[game] : formatOptions.default;
   
   // Find the currently selected option for display
-  const selectedOption = options.find(option => option.id === value) || { label: 'Sélectionner un format', description: 'Choisissez un format de match' };
+  const selectedOption = options.find(option => option.id === value) || { 
+    label: 'Selectionner un format', 
+    description: 'Choisissez un format de match',
+    icon: '⚙️'
+  };
 
   const handleOptionClick = (optionId) => {
     onChange({
@@ -47,7 +65,7 @@ const MatchFormatSelector = ({
 
   return (
     <div className={`relative ${className}`}>
-      <label className="absolute text-[14px] font-custom text-gray-300 leading-tight tracking-widest -translate-y-7 top-5 left-4 text-xs rounded-md bg-[#181818] px-2 z-20">
+      <label className="absolute text-[14px] font-ea-football text-gray-300 leading-tight tracking-widest -translate-y-7 top-3 left-4 text-xs rounded-md px-2 z-20">
         Format de Match
       </label>
       
@@ -55,12 +73,15 @@ const MatchFormatSelector = ({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full bg-secondary text-white rounded-xl angular-cut px-6 py-3 focus:outline-none focus:ring-2 focus:ring-primary/30 text-left relative pr-10 border border-transparent transition-all duration-200"
+        className="w-full bg-[#21324F] text-gray-500 font-ea-football text-sm tracking-wider rounded-lg px-6 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/30 text-left relative pr-10 border border-transparent transition-all duration-200 hover:bg-[#21324F]/80"
       >
         <div className="flex items-center">
           {selectedOption.icon && <span className="mr-2">{selectedOption.icon}</span>}
           <div>
-            <div className="font-medium">{selectedOption.label}</div>
+            <div className="text-gray-400">{selectedOption.label}</div>
+            {selectedOption.description && (
+              <div className="text-xs text-gray-500">{selectedOption.description}</div>
+            )}
           </div>
         </div>
         
@@ -74,7 +95,7 @@ const MatchFormatSelector = ({
       
       {/* Dropdown options */}
       {isOpen && (
-        <div className="absolute z-30 mt-1 w-full bg-secondary/95 backdrop-blur-sm rounded-xl angular-cut shadow-lg border border-gray-700 overflow-hidden">
+        <div className="absolute font-ea-football z-30 mt-1 w-full bg-[#21324F] backdrop-blur-sm rounded-lg shadow-lg border border-gray-700 overflow-hidden">
           <div className="py-1 max-h-60 overflow-auto">
             {options.map((option) => (
               <button
@@ -82,8 +103,8 @@ const MatchFormatSelector = ({
                 type="button"
                 onClick={() => handleOptionClick(option.id)}
                 className={`
-                  w-full text-left px-6 py-2 hover:bg-primary/10 flex items-center
-                  ${value === option.id ? 'bg-primary/20 text-primary border-l-4 border-primary' : 'border-l-4 border-transparent'}
+                  w-full text-left px-6 py-2 hover:bg-primary/10 flex items-center transition-colors duration-200
+                  ${value === option.id ? 'bg-primary/20 text-primary border-l-4 border-primary' : 'border-l-4 border-transparent hover:border-l-4 hover:border-primary/50'}
                 `}
               >
                 {option.icon && <span className="mr-2">{option.icon}</span>}
@@ -114,7 +135,7 @@ const MatchFormatSelector = ({
         className="sr-only"
         aria-hidden="true"
       >
-        <option value="">Sélectionner un format</option>
+        <option value="" className='text-gray-400'>Selectionner un format</option>
         {options.map(option => (
           <option key={option.id} value={option.id}>{option.label}</option>
         ))}

@@ -1,13 +1,12 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { AlertCircleIcon } from 'lucide-react';
+import { AlertCircleIcon, DollarSign, Gamepad2, Users, Monitor, Trophy } from 'lucide-react';
 import axios from 'axios';
 import { HeroSection } from './HeroSection';
 import TransparentLoader from './Loader';
 import { useToast } from '@/utils/ToastProvider';
 import TabComponent from './TabComponent';
-import { formatDate } from '@/utils/helpers';
 export const runtime = 'edge';
 
 const TournamentPage = () => {
@@ -25,36 +24,7 @@ const TournamentPage = () => {
 
   const { slug } = useParams();
   const router = useRouter();
-  // Calculate days remaining until end date
-  function calculateDaysRemaining(endDate) {
-    const today = new Date();
-    const end = new Date(endDate);
-    const diffTime = Math.max(0, end - today);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
-  }
 
-  // Calculate total days between start and end date
-  function calculateTotalDays(startDate, endDate) {
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const diffTime = end - start;
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include both start and end dates
-    return diffDays;
-  }
-
-  // Calculate total rounds based on tournament format and participant count
-  function calculateTotalRounds(participants, bracketType) {
-    if (bracketType === 'Single Elimination') {
-      return Math.ceil(Math.log2(participants));
-    } else if (bracketType === 'Double Elimination') {
-      return Math.ceil(Math.log2(participants)) * 2 - 1;
-    } else if (bracketType === 'Round Robin') {
-      return participants - 1;
-    }
-    // Default fallback
-    return Math.ceil(Math.log2(participants));
-  }
   // Fetch tournament data
   useEffect(() => {
     const fetchTournament = async () => {
@@ -69,7 +39,6 @@ const TournamentPage = () => {
           setTournament(data.tournament);
           console.log('Tournament data loaded:', data.tournament);
 
-          // Once we have the tournament, fetch the game data
           if (data.tournament && data.tournament.id) {
             await fetchGameData(data.tournament.id);
           }
@@ -107,14 +76,6 @@ const TournamentPage = () => {
       setGameLoading(false);
     }
   };
-
-  useEffect(() => {
-    let timer;
-    if (showGlow) {
-      timer = setTimeout(() => setShowGlow(false), 1200);
-    }
-    return () => clearTimeout(timer);
-  }, [showGlow]);
 
   const generateInitialMatches = async (tournamentId) => {
     try {
@@ -204,7 +165,6 @@ const TournamentPage = () => {
     }
   };
 
-  // Check if data is ready to display
   const isDataReady = !loading && tournament;
 
   if (load) {
@@ -230,7 +190,7 @@ const TournamentPage = () => {
 
   if (error) {
     return (
-      <div className="text-red-500 text-center">
+      <div className="text-red-500 text-center flex items-center justify-center gap-2">
         <AlertCircleIcon /> Error: {error}
       </div>
     );
@@ -243,43 +203,7 @@ const TournamentPage = () => {
   console.log('Rendering with game data:', gameData);
 
   return (
-    <div className="relative flex flex-col gap-8 text-white p-2 rounded-lg">
-      {/* Glow Effect */}
-      <div
-        className={`fixed inset-0 z-[999] pointer-events-none transition-opacity duration-1000 ${
-          showGlow ? 'opacity-100' : 'opacity-0'
-        }`}
-      >
-        <div
-          className={`absolute top-0 left-0 right-0 h-24 bg-gradient-to-b ${
-            glowColor === 'green'
-              ? 'from-green-500 via-green-500/20'
-              : 'from-red-500 via-red-500/20'
-          } to-transparent`}
-        />
-        <div
-          className={`absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t ${
-            glowColor === 'green'
-              ? 'from-green-500 via-green-500/20'
-              : 'from-red-500 via-red-500/20'
-          } to-transparent`}
-        />
-        <div
-          className={`absolute top-0 bottom-0 left-0 w-24 bg-gradient-to-r ${
-            glowColor === 'green'
-              ? 'from-green-500 via-green-500/20'
-              : 'from-red-500 via-red-500/20'
-          } to-transparent`}
-        />
-        <div
-          className={`absolute top-0 bottom-0 right-0 w-24 bg-gradient-to-l ${
-            glowColor === 'green'
-              ? 'from-green-500 via-green-500/20'
-              : 'from-red-500 via-red-500/20'
-          } to-transparent`}
-        />
-      </div>
-
+    <div className="relative flex flex-col gap-8 text-white rounded-lg p-6">
       {/* Tournament Content */}
       <div
         className={`transition-all duration-300 gap-2 ease-in-out ${
@@ -289,18 +213,22 @@ const TournamentPage = () => {
         }`}
       >
         {activeTab === 'Overview' && isDataReady && (
-          <HeroSection
-            spots_remaining={tournament.spots_remaining}
-            tournamentId={tournament.id}
-            title={tournament.name}
-            backgroundSrc={tournament.featured_image}
-            startDate={tournament.start_date}
-            endDate={tournament.end_date}
-            tournament={tournament}
-            updateTournamentStatus={updateTournamentStatus}
-            gameData={gameData}
-            gameLoading={gameLoading}
-          />
+          <>
+            <HeroSection
+              spots_remaining={tournament.spots_remaining}
+              tournamentId={tournament.id}
+              title={tournament.name}
+              backgroundSrc={tournament.featured_image}
+              startDate={tournament.start_date}
+              endDate={tournament.end_date}
+              tournament={tournament}
+              updateTournamentStatus={updateTournamentStatus}
+              gameData={gameData}
+              gameLoading={gameLoading}
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+            />
+          </>
         )}
       </div>
 

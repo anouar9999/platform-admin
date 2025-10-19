@@ -1,470 +1,475 @@
-"use client"
+'use client';
 import React, { useState, useEffect } from 'react';
-import { 
-  Users, 
-  Trophy, 
-  CalendarDays, 
-  UserCheck, 
-  UserPlus, 
-  Award, 
-  DollarSign, 
-  Shield, 
-  Target, 
+import {
+  Users,
+  Trophy,
+  DollarSign,
   Activity,
-  BarChart3,
-  PieChart,
+  AlertCircle,
+  CheckCircle,
+  Clock,
+  Gamepad2,
+  Shield,
+  Target,
+  FileCheck,
+  PlayCircle,
+  Award,
   RefreshCw,
-  Loader2
 } from 'lucide-react';
-import { TbTournament } from 'react-icons/tb';
 
-// StatCard component with hover effects
-const StatCard = ({ title, value, icon: Icon, color, trend, trendValue }) => {
-  const colorClasses = {
-    blue: 'text-blue-500 bg-blue-500/10',
-    green: 'text-green-500 bg-green-500/10',
-    yellow: 'text-yellow-500 bg-yellow-500/10',
-    red: 'text-red-500 bg-red-500/10',
-    purple: 'text-purple-500 bg-purple-500/10',
-    indigo: 'text-indigo-500 bg-indigo-500/10',
-    orange: 'text-orange-500 bg-orange-500/10',
-    pink: 'text-pink-500 bg-pink-500/10'
-  };
-  
-  const colorClass = colorClasses[color] || 'text-blue-500 bg-blue-500/10';
-  const [iconColor, bgColor] = colorClass.split(' ');
-  
-  return (
-    <div className="bg-secondary angular-cut p-6 
-                   transition-all duration-300 hover:-translate-y-1 hover:shadow-lg shadow-md">
-      <div className="flex items-center justify-between">
-        <div className="flex-1">
-          <div className="flex items-center mb-3">
-            <div className={`p-2 rounded-lg ${bgColor} mr-3`}>
-              <Icon className={`w-5 h-5 ${iconColor}`} />
-            </div>
-            <h3 className="text-gray-400 text-sm font-valorant">{title}</h3>
-          </div>
-          
-          <p className={`text-2xl font-bold ${iconColor}`}>{value}</p>
-          
-          {trend && (
-            <div className="flex items-center mt-2 text-xs">
-              {trend === 'up' ? (
-                <div className="flex items-center text-green-400">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3 mr-1">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.5-11a.5.5 0 00-1 0v2.586l-2.293-2.293a.5.5 0 00-.707.708l3 3a.5.5 0 00.708 0l3-3a.5.5 0 00-.708-.708L10.5 9.586V7z" clipRule="evenodd" />
-                  </svg>
-                  {trendValue}
-                </div>
-              ) : (
-                <div className="flex items-center text-red-400">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3 mr-1">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.5-11a.5.5 0 00-1 0v2.586l-2.293-2.293a.5.5 0 00-.707.708l3 3a.5.5 0 00.708 0l3-3a.5.5 0 00-.708-.708L10.5 9.586V7z" clipRule="evenodd" transform="rotate(180 10 10)" />
-                  </svg>
-                  {trendValue}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+// Stats Card Component
+const StatsCard = ({ icon: Icon, label, value, change, trend, color, subtext, onClick }) => (
+  <div
+    onClick={onClick}
+    className={`bg-gradient-to-br from-[#1a2332] to-[#0f172a] p-6 rounded-xl transition-all duration-300 hover:shadow-xl group ${
+      onClick ? 'cursor-pointer' : ''
+    }`}
+  >
+    <div className="flex items-start justify-between mb-4">
+      <div className={`p-3 rounded-lg `}>
+        <Icon
+          className={`w-6 h-6 ${
+            color === 'blue'
+              ? 'text-blue-400'
+              : color === 'green'
+              ? 'text-green-400'
+              : color === 'purple'
+              ? 'text-purple-400'
+              : color === 'orange'
+              ? 'text-orange-400'
+              : color === 'red'
+              ? 'text-red-400'
+              : 'text-yellow-400'
+          }`}
+        />
       </div>
     </div>
-  );
-};
-
-// Section header with title and subtitle
-const SectionHeader = ({ title, subtitle }) => (
-  <div className="mb-6">
-    <div>
-      <div className="flex items-center text-primary">
-        {subtitle && (
-          <>
-            <div className="w-1 h-4 bg-primary rounded-full"></div>
-            <p className="mx-2 font-mono uppercase tracking-wider flex items-center">
-              <span className="mr-2">
-                <svg 
-                  xmlns="http://www.w3.org/2000/svg" 
-                  viewBox="0 0 20 20" 
-                  fill="currentColor" 
-                  className="w-3.5 h-3.5"
-                >
-                  <path fillRule="evenodd" d="M4.606 12.97a.75.75 0 01-.134 1.051 2.494 2.494 0 00-.93 2.437 2.494 2.494 0 002.437-.93.75.75 0 111.186.918 3.995 3.995 0 01-4.482 1.332.75.75 0 01-.461-.461 3.994 3.994 0 011.332-4.482.75.75 0 011.052.134z" clipRule="evenodd" />
-                  <path fillRule="evenodd" d="M5.752 12A13.07 13.07 0 008 14.248v4.002c0 .414.336.75.75.75a5 5 0 004.797-6.48 12.984 12.984 0 005.45-10.848.75.75 0 00-.735-.735 12.984 12.984 0 00-10.849 5.45A5 5 0 001.5 8.75a.75.75 0 00.75.75h4.002zM9.5 8a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" clipRule="evenodd" />
-                </svg>
-              </span>
-              {subtitle}
-            </p>
-          </>
-        )}
-      </div>
-      <h1 className="text-3xl flex items-center font-custom tracking-wider uppercase">
-        {title}
-      </h1>
-    </div>
+    <h3 className="text-slate-400 text-sm font-circular-web mb-2 uppercase tracking-wider">
+      {label}
+    </h3>
+    <p className="text-white text-3xl font-zentry mb-1">{value}</p>
+    {subtext && <p className="text-slate-500 text-xs">{subtext}</p>}
   </div>
 );
 
-// Game card for displaying game-specific stats
-const GameCard = ({ game, count, color, icon: Icon }) => {
-  const colorClasses = {
-    blue: 'text-blue-500 bg-blue-500/10',
-    green: 'text-green-500 bg-green-500/10',
-    yellow: 'text-yellow-500 bg-yellow-500/10',
-    red: 'text-red-500 bg-red-500/10',
-    purple: 'text-purple-500 bg-purple-500/10',
-    indigo: 'text-indigo-500 bg-indigo-500/10',
-    orange: 'text-orange-500 bg-orange-500/10',
-    pink: 'text-pink-500 bg-pink-500/10'
-  };
-  
-  const colorClass = colorClasses[color] || 'text-blue-500 bg-blue-500/10';
-  const [iconColor, bgColor] = colorClass.split(' ');
-  
-  return (
-    <div className="bg-secondary rounded-lg p-5
-                  transition-all duration-300 hover:-translate-y-1 hover:shadow-lg shadow-md">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className={`text-xl font-custom ${iconColor}`}>{game}</h3>
-          <p className="text-2xl text-white font-bold mt-1">{count}</p>
-        </div>
-        
-        <div className={`p-3 rounded-full ${bgColor}`}>
-          <Icon className={`w-6 h-6 ${iconColor}`} />
-        </div>
-      </div>
+// Mini Stat Card
+const MiniStatCard = ({ icon: Icon, label, value, color = 'blue', subtitle }) => (
+  <div className="bg-[#1a2332] p-5 rounded-lg hover:border-slate-600 transition-all">
+    <div className="flex items-center justify-between mb-3">
+      <h3 className="text-white font-circular-web text-sm">{label}</h3>
+      <Icon
+        className={`
+        ${
+          color === 'blue'
+            ? 'text-blue-400'
+            : color === 'green'
+            ? 'text-green-400'
+            : color === 'purple'
+            ? 'text-purple-400'
+            : color === 'orange'
+            ? 'text-orange-400'
+            : color === 'yellow'
+            ? 'text-yellow-400'
+            : color === 'red'
+            ? 'text-red-400'
+            : 'text-slate-400'
+        }
+      `}
+        size={20}
+      />
     </div>
-  );
-};
+    <p className="text-2xl font-zentry text-white mb-1">{value}</p>
+    {subtitle && <p className="text-slate-400 text-xs">{subtitle}</p>}
+  </div>
+);
 
-const GeniusMoDashboard = () => {
+// Game Stats Component
+const GameStats = ({ games }) => (
+  <div className="space-y-4">
+    {games.list.map((game) => {
+      const tournamentCount =
+        games.tournamentsPerGame[game.slug.toLowerCase().replace(/\s+/g, '')] || 0;
+      const teamCount = games.teamsPerGame[game.slug.toLowerCase().replace(/\s+/g, '')] || 0;
+
+      return (
+        <div key={game.id} className="p-4 bg-secondary/30 ">
+          <div className="flex  items-center justify-between mb-3">
+            <h4 className="text-primary font-zentry font-3xl">{game.name}</h4>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <p className="text-slate-400 text-xs font-circular-web mb-1">Tournaments</p>
+              <p className="text-white font-bold text-lg">{tournamentCount}</p>
+            </div>
+            <div>
+              <p className="text-slate-400 text-xs font-circular-web mb-1">Teams</p>
+              <p className="text-white font-bold text-lg">{teamCount}</p>
+            </div>
+          </div>
+        </div>
+      );
+    })}
+  </div>
+);
+
+// Main Dashboard Component
+const AdminDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  
-  // Initialize stats state with default values
-  const [stats, setStats] = useState({
-    totalUsers: 0,
-    totalTournaments: 0,
-    recentLogins: 0,
-    upcomingTournaments: 0,
-    newUsers: 0,
-    totalAdmins: 0,
-    avgTournamentDuration: 0,
-    totalPrizePool: 0,
-    totalTeams: 0,
-    activeTeams: 0,
-    averageTeamSize: 0,
-    pendingJoinRequests: 0,
-    teamsPerGame: {},
-    teamPrivacyDistribution: {
-      public: 0,
-      private: 0,
-      invitationOnly: 0,
-    },
-    // These aren't in the API but we'll calculate them
-    tournamentsByType: {
-      singleElimination: 0,
-      doubleElimination: 0,
-      roundRobin: 0,
-      battleRoyale: 0
-    }
-  });
+  const [stats, setStats] = useState(null);
 
-  // Function to fetch stats from the API
-  const fetchStats = async () => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      // Make the actual API call to your backend
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/dashboard-stats.php`);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      
-      if (data.success) {
-        // Update stats with the data from the API
-        setStats(data.data);
-      } else {
-        throw new Error(data.error || 'Failed to fetch dashboard stats');
-      }
-      
-    } catch (error) {
-      console.error('Error fetching stats:', error);
-      setError(error.message || 'Failed to load dashboard data');
-      // Show error toast if you're using a toast library
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Fetch stats on component mount
   useEffect(() => {
-    fetchStats();
+    const fetchDashboardStats = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/dashboard-stats.php`,
+        );
+        const data = await response.json();
+
+        if (data.success) {
+          setStats(data.data);
+          setError(null);
+        } else {
+          setError(data.error || 'Failed to load dashboard statistics');
+        }
+      } catch (err) {
+        setError('Network error: Unable to fetch dashboard data');
+        console.error('Dashboard fetch error:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDashboardStats();
+    const interval = setInterval(fetchDashboardStats, 30000);
+    return () => clearInterval(interval);
   }, []);
 
-  // Calculate percentage of active teams
-  const activeTeamPercentage = stats.totalTeams > 0 
-    ? Math.round((stats.activeTeams / stats.totalTeams) * 100) 
-    : 0;
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen ">
+        <div className="text-center space-y-4">
+          <div className="animate-spin w-12 h-12 border-4 border-primary border-t-transparent rounded-full mx-auto"></div>
+          <p className="text-slate-400 font-zentry text-3xl">Loading STATS...</p>
+        </div>
+      </div>
+    );
+  }
 
-  // Format prize pool with currency
-  const formattedPrizePool = new Intl.NumberFormat('fr-MA', {
-    style: 'currency',
-    currency: 'MAD',
-    maximumFractionDigits: 0
-  }).format(stats.totalPrizePool);
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-[#0f172a]">
+        <div className="text-center space-y-4">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto" />
+          <p className="text-red-500 text-lg">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-[#1a2332] text-white rounded-lg hover:bg-slate-700/50"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
-  // Handle refresh button click
-  const handleRefresh = () => {
-    fetchStats();
+  const getTrend = (value) => {
+    if (value > 0) return 'up';
+    if (value < 0) return 'down';
+    return 'neutral';
   };
 
- 
-
   return (
-    <div className="p-6 space-y-8 bg-dark rounded-xl">
-    
-      
-      {/* Error message if there's an error */}
-      {error && (
-        <div className="bg-red-500/20 border border-red-500 text-red-400 p-4 rounded-lg">
-          <p className="font-medium">Error loading dashboard data:</p>
-          <p>{error}</p>
-        </div>
-      )}
-      
-      {/* User Statistics */}
-      <div>
-        <SectionHeader 
-          title="User Analytics" 
-          subtitle="Overview of user activity and engagement"
-        />
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard
-            title="Total Users"
-            value={stats.totalUsers.toLocaleString()}
-            icon={Users}
+    <div className="min-h-screen bg-[#0f172a] text-white p-8">
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Header */}
+        <div className="flex items-center justify-between"></div>
+
+        {/* Main Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <StatsCard
+            icon={Trophy}
+            label="Total Tournaments"
+            value={stats.coreMetrics.tournaments.total}
+            change={stats.trends.tournamentGrowth}
+            trend={getTrend(stats.trends.tournamentGrowth)}
             color="blue"
-            trend="up"
-            trendValue={`+${stats.newUsers} new`}
+            subtext={`${stats.coreMetrics.tournaments.live} live • ${stats.coreMetrics.tournaments.upcoming} upcoming`}
           />
-          <StatCard
-            title="Recent Logins"
-            value={stats.recentLogins.toLocaleString()}
-            icon={Activity}
+          <StatsCard
+            icon={Users}
+            label="Total Users"
+            value={stats.coreMetrics.users.total.toLocaleString()}
+            change={stats.trends.userGrowth}
+            trend={getTrend(stats.trends.userGrowth)}
             color="green"
-            trend="up"
-            trendValue="Last 7 days"
+            subtext={`${stats.coreMetrics.users.verified} verified • ${stats.coreMetrics.users.newThisMonth} new`}
           />
-          <StatCard
-            title="Admins"
-            value={stats.totalAdmins.toLocaleString()}
-            icon={UserCheck}
+          <StatsCard
+            icon={Target}
+            label="Active Teams"
+            value={stats.coreMetrics.teams.active}
+            change={stats.trends.teamGrowth}
+            trend={getTrend(stats.trends.teamGrowth)}
             color="purple"
+            subtext={`${stats.coreMetrics.teams.total} total • Avg ${stats.coreMetrics.teams.averageSize} members`}
           />
-          <StatCard
-            title="Upcoming Tournaments"
-            value={stats.upcomingTournaments.toLocaleString()}
-            icon={CalendarDays}
+          <StatsCard
+            icon={DollarSign}
+            label="Total Prize Pool"
+            value={`${stats.summary.totalPrizePool.toLocaleString()} DH`}
+            color="yellow"
+            subtext={`${stats.coreMetrics.financial.activePrizePool.toLocaleString()} DH active`}
+          />
+        </div>
+
+        {/* Engagement Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+          <MiniStatCard
+            icon={FileCheck}
+            label="Registrations"
+            value={stats.engagement.registrations.accepted}
+            subtitle={`${stats.engagement.registrations.pending} pending`}
+            color="green"
+          />
+          <MiniStatCard
+            icon={Clock}
+            label="Pending Requests"
+            value={stats.engagement.registrations.pending + stats.engagement.teamRequests.pending}
+            subtitle="Awaiting approval"
             color="yellow"
           />
-        </div>
-      </div>
-      
-      {/* Tournament Statistics */}
-      <div>
-        <SectionHeader 
-          title="Tournament Data" 
-          subtitle="Key metrics about tournaments"
-        />
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard
-            title="Total Tournaments"
-            value={stats.totalTournaments.toLocaleString()}
-            icon={Trophy}
+          <MiniStatCard
+            icon={PlayCircle}
+            label="Live Matches"
+            value={stats.matches.live}
+            subtitle={`${stats.matches.today} today`}
             color="orange"
           />
-          <StatCard
-            title="Prize Pool"
-            value={formattedPrizePool}
-            icon={DollarSign}
-            color="green"
+          <MiniStatCard
+            icon={Activity}
+            label="Active Users"
+            value={stats.engagement.activity.weeklyActiveUsers}
+            subtitle="Last 7 days"
+            color="blue"
           />
-          <StatCard
-            title="Avg. Duration"
-            value={`${stats.avgTournamentDuration} days`}
+          <MiniStatCard
             icon={Award}
-            color="indigo"
-          />
-          <StatCard
-            title="Single Elimination"
-            value={stats.tournamentsByType.singleElimination}
-            icon={BarChart3}
-            color="pink"
-          />
-        </div>
-      </div>
-      
-      {/* Team Statistics */}
-      <div>
-        <SectionHeader 
-          title="Team Analytics" 
-          subtitle={`${activeTeamPercentage}% of teams are currently active`}
-        />
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard
-            title="Total Teams"
-            value={stats.totalTeams.toLocaleString()}
-            icon={Shield}
-            color="blue"
-          />
-          <StatCard
-            title="Active Teams"
-            value={stats.activeTeams.toLocaleString()}
-            icon={Target}
-            color="green"
-          />
-          <StatCard
-            title="Avg Team Size"
-            value={stats.averageTeamSize.toFixed(1)}
-            icon={Users}
+            label="Completion Rate"
+            value={`${stats.quality.tournamentCompletionRate}%`}
+            subtitle="Tournament success"
             color="purple"
           />
-          <StatCard
-            title="Pending Requests"
-            value={stats.pendingJoinRequests.toLocaleString()}
-            icon={UserPlus}
-            color="orange"
-            trend={stats.pendingJoinRequests > 0 ? "up" : "down"}
-            trendValue={stats.pendingJoinRequests > 0 ? "Needs attention" : "All good"}
-          />
         </div>
-      </div>
 
-      {/* Teams Per Game */}
-      <div>
-        <SectionHeader title="Teams By Game" />
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {Object.entries(stats.teamsPerGame).length > 0 ? (
-            Object.entries(stats.teamsPerGame).map(([gameKey, count], index) => {
-              // Get display name by converting camelCase back to display format
-              // e.g., "freeFire" becomes "FREE FIRE"
-              const displayName = gameKey
-                // Insert a space before all uppercase letters
-                .replace(/([A-Z])/g, ' $1')
-                // Capitalize the first letter and the rest
-                .replace(/^./, (str) => str.toUpperCase())
-                .trim()
-                .toUpperCase();
-              
-              // Assign a different color to each game
-              const colors = ["red", "orange", "blue", "purple", "green", "indigo", "pink", "yellow"];
-              const color = colors[index % colors.length];
-              
-              return (
-                <GameCard 
-                  key={gameKey}
-                  game={displayName} 
-                  count={count} 
-                  color={color} 
-                  icon={Activity} 
-                />
-              );
-            })
-          ) : (
-            // Fallback to display the 4 original games if no data
-            <>
-              <GameCard 
-                game="VALORANT" 
-                count={stats.teamsPerGame.valorant || 0} 
-                color="red" 
-                icon={Activity} 
-              />
-              <GameCard 
-                game="FREE FIRE" 
-                count={stats.teamsPerGame.freeFire || 0} 
-                color="orange" 
-                icon={Activity} 
-              />
-              <GameCard 
-                game="FC FOOTBALL" 
-                count={stats.teamsPerGame.fcFootball || 0} 
-                color="blue" 
-                icon={Activity} 
-              />
-              <GameCard 
-                game="STREET FIGHTER" 
-                count={stats.teamsPerGame.streetFighter || 0} 
-                color="purple" 
-                icon={Activity} 
-              />
-            </>
-          )}
+        {/* Secondary Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="bg-[#1a2332] p-6 ">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-white font-circular-web">Match Stats</h3>
+              <Gamepad2 className="text-blue-400" size={20} />
+            </div>
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-slate-400 ">Total</span>
+                <span className="text-white  text-xl font-zentry">{stats.matches.total}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-slate-400">Completed</span>
+                <span className="text-green-400  text-xl font-zentry">
+                  {stats.matches.completed}
+                </span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-slate-400">Scheduled</span>
+                <span className="text-blue-400  text-xl font-zentry">
+                  {stats.matches.scheduled}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-[#1a2332] p-6 rounded-lg">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-white font-medium">Quality Metrics</h3>
+              <CheckCircle className="text-green-400" size={20} />
+            </div>
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-slate-400">Fill Rate</span>
+                <span className="text-white text-xl font-zentry">
+                  {stats.quality.tournamentFillRate}%
+                </span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-slate-400">Avg Participants</span>
+                <span className="text-white  text-xl font-zentry">
+                  {stats.quality.avgParticipantsPerTournament}
+                </span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-slate-400">Return Players</span>
+                <span className="text-white  text-xl font-zentry">
+                  {stats.quality.returnPlayerCount}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-[#1a2332] p-6 rounded-lg">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-white font-circular-web">Team Tiers</h3>
+              <Users className="text-purple-400" size={20} />
+            </div>
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-slate-400">Professional</span>
+                <span className="text-white  text-xl font-zentry">
+                  {stats.coreMetrics.teams.professional}
+                </span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-slate-400">Semi-Pro</span>
+                <span className="text-white  text-xl font-zentry">
+                  {stats.coreMetrics.teams.semiPro}
+                </span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-slate-400">Amateur</span>
+                <span className="text-white  text-xl font-zentry">
+                  {stats.coreMetrics.teams.amateur}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-[#1a2332] p-6 rounded-lg">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-white font-medium">System Health</h3>
+              <Shield className="text-blue-400" size={20} />
+            </div>
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-slate-400">Admins</span>
+                <span className="text-white  text-xl font-zentry">{stats.admin.totalAdmins}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-slate-400">Failed Logins</span>
+                <span
+                  className={`font-zentry  text-xl ${
+                    stats.admin.systemHealth.failedLoginAttempts > 10
+                      ? 'text-red-400'
+                      : 'text-white'
+                  }`}
+                >
+                  {stats.admin.systemHealth.failedLoginAttempts}
+                </span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-slate-400">Unread Notifications</span>
+                <span className="text-white font-zentry  text-xl">
+                  {stats.admin.content.unreadNotifications}
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-      
-      {/* Team Privacy Distribution */}
-      <div>
-        <SectionHeader title="Team Privacy Distribution" />
+
+        {/* Tournament Types */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <StatCard
-            title="Public Teams"
-            value={stats.teamPrivacyDistribution.public}
-            icon={PieChart}
-            color="blue"
-          />
-          <StatCard
-            title="Private Teams"
-            value={stats.teamPrivacyDistribution.private}
-            icon={PieChart}
-            color="purple"
-          />
-          <StatCard
-            title="Invitation Only"
-            value={stats.teamPrivacyDistribution.invitationOnly}
-            icon={PieChart}
-            color="indigo"
-          />
+          <div className="bg-[#1a2332] p-6 rounded-lg">
+            <h3 className="text-white font-circular-web mb-4">By Bracket Type</h3>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-slate-400 text-sm">Single Elimination</span>
+                <span className="text-white font-zentry  text-xl">
+                  {stats.tournamentTypes.byBracketType.singleElimination}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-400 text-sm">Double Elimination</span>
+                <span className="text-white font-zentry  text-xl">
+                  {stats.tournamentTypes.byBracketType.doubleElimination}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-400 text-sm">Round Robin</span>
+                <span className="text-white font-zentry  text-xl">
+                  {stats.tournamentTypes.byBracketType.roundRobin}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-400 text-sm">Battle Royale</span>
+                <span className="text-white font-zentry  text-xl">
+                  {stats.tournamentTypes.byBracketType.battleRoyale}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-[#1a2332] p-6 rounded-lg">
+            <h3 className="text-white font-circular-web mb-4">By Participation</h3>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-slate-400 text-sm">Individual</span>
+                <span className="text-white font-zentry  text-xl">
+                  {stats.tournamentTypes.byParticipationType.individual}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-400 text-sm">Team</span>
+                <span className="text-white font-zentry  text-xl">
+                  {stats.tournamentTypes.byParticipationType.team}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-[#1a2332] p-6 rounded-lg">
+            <h3 className="text-white font-circular-web mb-4">By Status</h3>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-slate-400 text-sm">Draft</span>
+                <span className="text-white font-zentry  text-xl">
+                  {stats.tournamentTypes.byStatus.draft}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-400 text-sm">Registration Open</span>
+                <span className="text-green-400 font-zentry  text-xl">
+                  {stats.tournamentTypes.byStatus.registration_open}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-400 text-sm">Ongoing</span>
+                <span className="text-blue-400 font-zentry  text-xl">
+                  {stats.tournamentTypes.byStatus.ongoing}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-400 text-sm">Completed</span>
+                <span className="text-slate-400 font-zentry  text-xl">
+                  {stats.tournamentTypes.byStatus.completed}
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-      
-      {/* Tournament Type Distribution */}
-      <div>
-        <SectionHeader title="Tournament Types" />
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard
-            title="Single Elimination"
-            value={stats.tournamentsByType.singleElimination}
-            icon={TbTournament}
-            color="blue"
-          />
-          <StatCard
-            title="Double Elimination"
-            value={stats.tournamentsByType.doubleElimination}
-            icon={TbTournament}
-            color="green"
-          />
-          <StatCard
-            title="Round Robin"
-            value={stats.tournamentsByType.roundRobin}
-            icon={TbTournament}
-            color="orange"
-          />
-          <StatCard
-            title="Battle Royale"
-            value={stats.tournamentsByType.battleRoyale}
-            icon={TbTournament}
-            color="purple"
-          />
+
+        {/* Games and Recent Activity */}
+        <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
+          <div className="bg-[#1a2332] p-6 rounded-lg">
+            {/* <h2 className="text-2xl font-zentry text-white mb-4 flex items-center gap-2">
+              <Gamepad2 size={24} />
+              Games Overview
+            </h2> */}
+            <GameStats games={stats.games} />
+          </div>
         </div>
       </div>
     </div>
   );
 };
 
-export default GeniusMoDashboard;
+export default AdminDashboard;

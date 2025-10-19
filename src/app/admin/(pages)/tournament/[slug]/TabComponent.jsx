@@ -12,8 +12,8 @@ import {
 } from 'lucide-react';
 import WaitingList from '@/app/admin/components/widgets/cards/WaitingList';
 import ParticipantList from '@/app/admin/components/widgets/cards/ParticipantList';
-import TournamentBracket from '../../../TournamentBracket';
-import DoubleEliminationBracket from '@/app/admin/DoubleElminationBracket';
+import TournamentBracket from '../../../components/TournamentBracket';
+import DoubleEliminationBracket from '@/app/admin/components/DoubleElminationBracket';
 import InfoCard from './InfoCard';
 import BattleRoyale from '@/app/admin/components/brackets/BattleRoyal';
 import { FaTrophy } from 'react-icons/fa';
@@ -69,20 +69,20 @@ const TabComponent = ({ activeTab, onTabChange, tournament,gameData }) => {
                             e.target.src = '/api/placeholder/400/225';
                           }}
                         />
-                        <div className="absolute inset-0 bg-gradient-to-r from-secondary via-secondary/85 to-secondary/50"></div>
+                        <div className="absolute inset-0 bg-gradient-to-r from-[#1a2332] via-[#1a2332]/85 to-[#1a2332]/50"></div>
 
-                        <div className="absolute inset-0 bg-gradient-to-t from-dark via-transparent to-transparent"></div>
-                        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-t from-dark/85 to-transparent"></div>
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#1a2332] via-transparent to-transparent"></div>
+                        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-t from-[#1a2332]/85 to-transparent"></div>
 
-                        <div className="absolute inset-0 bg-gradient-to-b from-dark via-transparent to-transparent"></div>
-                        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-b from-dark/85 to-transparent"></div>
+                        <div className="absolute inset-0 bg-gradient-to-b from-[#1a2332] via-transparent to-transparent"></div>
+                        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-b from-[#1a2332]/85 to-transparent"></div>
 
-                        <div className="absolute inset-0 bg-gradient-to-r from-dark via-transparent to-transparent"></div>
-                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-r from-dark/85 to-transparent"></div>
+                        <div className="absolute inset-0 bg-gradient-to-r from-[#1a2332] via-transparent to-transparent"></div>
+                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-r from-[#1a2332]/85 to-transparent"></div>
 
                         {/* Right side fade effect */}
-                        <div className="absolute inset-0 bg-gradient-to-l from-dark via-transparent to-transparent"></div>
-                        <div className="absolute right-0 top-0 bottom-0 w-1 bg-gradient-to-l from-dark/85 to-transparent"></div>
+                        <div className="absolute inset-0 bg-gradient-to-l from-[#1a2332] via-transparent to-transparent"></div>
+                        <div className="absolute right-0 top-0 bottom-0 w-1 bg-gradient-to-l from-[#1a2332]/85 to-transparent"></div>
                       </div>
 
                       {/* Content Layer */}
@@ -131,28 +131,38 @@ const TabComponent = ({ activeTab, onTabChange, tournament,gameData }) => {
                 </div>
               </div>
 
-              {/* About Section - Now full width with dark background */}
-              <div className="w-full text-gray-400 rounded-lg p-3 md:p-4">
-                <h3 className="font-custom text-primary leading-tight uppercase tracking-wider text-lg md:text-3xl mb-2 md:mb-4 flex items-center">
-                  <AlertCircle className="w-4 h-4 md:w-5 md:h-5 mr-2" />
-                  About the tournament
-                </h3>
-                <p className="text-xs md:text-sm">{tournament.description}</p>
-              </div>
+              
             </div>
 
-            {/* Rules Section */}
-            <div className="p-3 md:p-4 rounded-lg w-full text-gray-400 text-xs md:text-sm space-y-2 md:space-y-4">
-              <h3 className="text-xl md:text-3xl font-custom text-primary leading-tight uppercase tracking-wider mb-2 md:mb-4 flex items-center">
-                <AlertCircle className="w-4 h-4 md:w-5 md:h-5 mr-2" />
+         <div className="relative z-10 flex items-center gap-4 mb-8 pb-4 border-b-2 border-primary/30">
+            <div className="w-12 h-12 bg-primary flex items-center justify-center transform -skew-x-12">
+              <AlertCircle className="w-6 h-6 text-black transform skew-x-12" />
+            </div>
+            <div>
+              <h3 className="text-2xl md:text-3xl font-zentry text-white uppercase tracking-wider">
                 Tournament Rules
               </h3>
-              {tournament.rules.split('\n').map((rule, index) => (
-                <p key={index} className="text-xs md:text-sm">
-                  {rule}
-                </p>
-              ))}
+              <div className="h-0.5 w-20 bg-primary mt-2"></div>
             </div>
+          </div>
+          
+          {/* Rules List */}
+          <div className="relative z-10 space-y-4">
+            {tournament.rules.split('\n').map((rule, index) => (
+              rule.trim() && (
+                <div key={index} className="flex items-start gap-4 group/rule pl-4 border-l-2 border-transparent hover:border-primary/50 transition-all duration-300">
+                  <div className="flex-shrink-0 w-8 h-8 bg-primary/20 border border-primary/40 flex items-center justify-center transform -skew-x-6 group-hover/rule:bg-primary group-hover/rule:scale-110 transition-all duration-300">
+                    <span className="text-sm font-bold text-primary group-hover/rule:text-black transform skew-x-6">
+                      {String(index + 1).padStart(2, '0')}
+                    </span>
+                  </div>
+                  <p className="text-sm md:text-base text-gray-400 leading-relaxed pt-1 group-hover/rule:text-white transition-colors duration-300 font-mono">
+                    {rule}
+                  </p>
+                </div>
+              )
+            ))}
+          </div>
           </div>
         );
       case 'Waiting List':

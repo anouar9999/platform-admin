@@ -12,14 +12,14 @@ const FloatingLabelTextarea = ({ label, icon: Icon, value, onChange, rows = 4 })
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(true)}
         rows={rows}
-        className="w-full bg-secondary text-white rounded-xl text-sm text-[10pt] angular-cut px-6 py-3 focus:outline-none focus:ring-2 focus:ring-black/20 peer resize-none"
+        className="w-[90%] bg-[#21324F] rounded-lg text-white text-sm text-[10pt] font-ea-football   tracking-wider px-6 py-3 focus:outline-none focus:ring-1 focus:ring-primary peer placeholder:font-ea-football placeholder-gray-500 "
       />
-      <label
-        className={`absolute transition-all text-[12pt] font-custom text-gray-300 leading-tight tracking-widest duration-200 pointer-events-none text-gray-400
+     <label
+        className={`absolute transition-all text-[14px] font-ea-football  leading-tight tracking-wide duration-200 pointer-events-none text-gray-400
           ${
             isFocused || value
-              ? '-translate-y-7 top-5 left-4 text-xs rounded-md bg-[#181818] px-2'
-              : 'text-base left-6 top-8 -translate-y-1/2'
+              ? '-translate-y-7 top-3 left-0 text-xs rounded  px-2'
+              : 'text-base left-6 top-1/2 -translate-y-1/2'
           }`}
       >
         {label}

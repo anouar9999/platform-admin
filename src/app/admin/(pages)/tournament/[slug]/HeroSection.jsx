@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowRight, Clock, Edit, Globe, Share2, Trash2, Users } from 'lucide-react';
+import { AlertCircle, ArrowRight, Clock, Edit, Globe, Share2, Trash2, Users } from 'lucide-react';
 import { useState } from 'react';
 import axios from 'axios';
 import { useToast } from '@/utils/ToastProvider';
@@ -8,7 +8,10 @@ import LoadingOverlay from './Loading';
 import TournamentStatus from './TournamentStatus';
 import { formatDate } from './../../../../../utils/helpers';
 import { motion } from 'framer-motion';
-import ToastDemo from '@/app/admin/toast';
+import ToastDemo from '@/app/admin/components/toast';
+import TabComponent from './TabComponent';
+
+
 
 export const HeroSection = ({
   updateTournamentStatus,
@@ -19,60 +22,61 @@ export const HeroSection = ({
   endDate,
   tournament,
   gameData,
+  onTabChange,
+  activeTab,
+  setActiveTab
 }) => {
   const [loading, setLoading] = useState(false);
   const { slug } = useParams();
   const router = useRouter();
   const { showToast } = useToast();
-// Example usage in admin.js
-async function resetTournament(tournamentId, adminId) {
-  try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/reset-tournament.php`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        tournament_id: tournamentId,
-        admin_id: adminId
-      })
-    });
-    
-    const data = await response.json();
-    
-    if (data.success) {
-      // Show success message
-      console.log('success', data.message);
-      window.location.reload()
-      // Refresh tournament data
-    } else {
-      // Show error message
-      console.log('error', data.error || 'Failed to reset tournament');
-    }
-  } catch (error) {
-    console.error('Error resetting tournament:', error);
-    console.log('error', 'Network error when resetting tournament');
-  }
-}
 
-// Example button in tournament management UI
-function TournamentActionButtons({ tournamentId, adminId }) {
-  return (
-    <div className="tournament-actions mt-4">
-      <button 
-        className="btn btn-danger mr-2"
-        onClick={() => {
-          if (window.confirm('Are you sure you want to reset this tournament? This will delete all matches but keep accepted participants.')) {
-            resetTournament(tournamentId, adminId);
-          }
-        }}
-      >
-        Reset Tournament
-      </button>
+  // Example usage in admin.js
+  async function resetTournament(tournamentId, adminId) {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/reset-tournament.php`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          tournament_id: tournamentId,
+          admin_id: adminId
+        })
+      });
       
-    </div>
-  );
-}
+      const data = await response.json();
+      
+      if (data.success) {
+        console.log('success', data.message);
+        window.location.reload()
+      } else {
+        console.log('error', data.error || 'Failed to reset tournament');
+      }
+    } catch (error) {
+      console.error('Error resetting tournament:', error);
+      console.log('error', 'Network error when resetting tournament');
+    }
+  }
+
+  // Example button in tournament management UI
+  function TournamentActionButtons({ tournamentId, adminId }) {
+    return (
+      <div className="tournament-actions mt-4">
+        <button 
+          className="btn btn-danger mr-2"
+          onClick={() => {
+            if (window.confirm('Are you sure you want to reset this tournament? This will delete all matches but keep accepted participants.')) {
+              resetTournament(tournamentId, adminId);
+            }
+          }}
+        >
+          Reset Tournament
+        </button>
+      </div>
+    );
+  }
+
   const handleEdit = () => {
     router.push(`/admin/edit-tournament/${tournamentId}`);
   };
@@ -117,6 +121,7 @@ function TournamentActionButtons({ tournamentId, adminId }) {
     hover: { scale: 1.1 },
     tap: { scale: 0.95 },
   };
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'registration_open':
@@ -133,6 +138,7 @@ function TournamentActionButtons({ tournamentId, adminId }) {
         return 'from-gray-500 to-gray-600';
     }
   };
+
   const GameFont = (game_name) => {
     switch (game_name) {
       case 'Free Fire':
@@ -143,7 +149,6 @@ function TournamentActionButtons({ tournamentId, adminId }) {
         return 'font-ea-football';
       case 'Street Fighter':
         return 'font-street-fighter';
-
       default:
         return 'custom';
     }
@@ -166,9 +171,7 @@ function TournamentActionButtons({ tournamentId, adminId }) {
   // Handle button click based on status and bracket type
   const handleActionButtonClick = () => {
     if (tournament.status === 'registration_closed') {
-      // Special handling for "Start Tournament" based on bracket type
       if (tournament.bracket_type === 'Battle Royale') {
-        // Fetch the Battle Royale leaderboard data first to check if it's properly set up
         updateTournamentStatus('ongoing');
 
         axios
@@ -178,7 +181,6 @@ function TournamentActionButtons({ tournamentId, adminId }) {
           .then((response) => {
             if (response.data.success) {
             } else {
-              // Handle error case
               toast.error('Failed to load Battle Royale data. Please try again.');
             }
           })
@@ -187,7 +189,6 @@ function TournamentActionButtons({ tournamentId, adminId }) {
             toast.error('An error occurred while loading Battle Royale data.');
           });
       } else if (tournament.bracket_type === 'Round Robin') {
-        // Navigate to Round Robin setup
         updateTournamentStatus('ongoing');
 
         axios
@@ -198,7 +199,6 @@ function TournamentActionButtons({ tournamentId, adminId }) {
             if (response.data.success) {
               console.log('the bracket generated succesfully')
             } else {
-              // Handle error case
               console.log('Failed to load round robin data. Please try again.');
             }
           })
@@ -207,11 +207,9 @@ function TournamentActionButtons({ tournamentId, adminId }) {
             console.log('An error occurred while loading round robin data.');
           });
       } else {
-        // For other bracket types, just update the status
         updateTournamentStatus('ongoing');
       }
     } else {
-      // Standard status update for other statuses
       let nextStatus;
       if (tournament.status === 'registration_open') nextStatus = 'registration_closed';
       else if (tournament.status === 'ongoing') nextStatus = 'completed';
@@ -219,10 +217,11 @@ function TournamentActionButtons({ tournamentId, adminId }) {
       if (nextStatus) updateTournamentStatus(nextStatus);
     }
   };
+
   return (
-    <div className="relative w-full overflow-hidden rounded-lg">
+    <div className="relative w-full overflow-hidden">
       {/* Hero container with better proportions */}
-      <div className="relative w-full h-48 md:h-52 overflow-hidden">
+      <div className="relative w-full h-70 md:h-80 overflow-hidden">
         {/* Background image with proper overlay */}
         <img
           src={`${process.env.NEXT_PUBLIC_BACKEND_URL}${backgroundSrc}`}
@@ -231,11 +230,11 @@ function TournamentActionButtons({ tournamentId, adminId }) {
         />
 
         {/* Gradient overlay with stronger bottom fade for better text legibility */}
-        <div className="absolute inset-0 bg-gradient-to-t from-dark via-transparent to-transparent"></div>
-        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-t from-dark/85 to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-secondary via-secondary to-transparent"></div>
+        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-t from-secondary to-transparent"></div>
 
-        <div className="absolute inset-0 bg-gradient-to-b from-dark via-transparent to-transparent"></div>
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-b from-dark/85 to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-transparent"></div>
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-b from-transparent to-transparent"></div>
 
         {/* Content container with flex layout */}
         <div className="absolute inset-0 z-10 flex flex-col h-full">
@@ -247,10 +246,8 @@ function TournamentActionButtons({ tournamentId, adminId }) {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
-                // className={`py-1.5 px-4 angular-cut bg-gradient-to-r ${getStatusColor(tournament.status)} shadow-lg`}
               >
                 <span className="text-white font-semibold uppercase text-sm tracking-wider">
-                  {/* {tournament.status.replace('_', ' ')} */}
                 </span>
               </motion.div>
             )}
@@ -303,17 +300,18 @@ function TournamentActionButtons({ tournamentId, adminId }) {
             <div className="flex-1 mr-4">
               {/* Title at bottom left */}
               <motion.h1
-                className={`${
-                  gameData.game_name == 'Street Fighter' ? 'text-xl' : 'text-xl md:text-xl'
-                } ${GameFont(
-                  gameData.game_name,
-                )} text-white drop-shadow-lg bg-gradient-to-r from-white to-white/70 text-transparent bg-clip-text mb-3`}
+                className="text-4xl md:text-5xl font-ea-football text-primary drop-shadow-lg  bg-clip-text mb-3"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7, delay: 0.3 }}
               >
-              {title}
+                {title}
               </motion.h1>
+
+              {/* About Section - Now full width with dark background */}
+              <div className="w-full text-gray-400 rounded-lg font-circular-web p-3 md:p-4">
+                <p className="text-xs md:text-sm">{tournament.description}</p>
+              </div>
 
               {/* Metadata section */}
               <motion.div
@@ -322,13 +320,13 @@ function TournamentActionButtons({ tournamentId, adminId }) {
                 transition={{ duration: 0.5, delay: 0.4 }}
               >
                 {/* Secondary info row */}
-                <div className="flex flex-wrap gap-4 text-white/80 text-xs">
+                <div className="flex flex-wrap gap-4 text-white/80 text-xs font-circular-web">
                   {/* Registration Period */}
                   {tournament && tournament.registration_start && tournament.registration_end && (
                     <div className="flex items-center space-x-2">
                       <Clock className="w-4 h-4 text-blue-300" />
                       <span className="text-primary font-semibold">
-                        <span className="font-mono text-md text-white">Registration:</span>{' '}
+                        <span className="text-md text-white">Registration:</span>{' '}
                         {formatDate(tournament.registration_start)} -{' '}
                         {formatDate(tournament.registration_end)}
                       </span>
@@ -359,7 +357,7 @@ function TournamentActionButtons({ tournamentId, adminId }) {
               
               {tournament && tournament.status && getNextStatusAction(tournament.status) && (
                 <motion.button
-                  className={`bg-primary angular-cut text-white px-4 py-2 font-medium flex items-center gap-2 shadow-lg`}
+                  className="bg-primary angular-cut text-black font-ea-football px-4 py-2 font-medium flex items-center gap-2 shadow-lg"
                   variants={buttonVariants}
                   initial="initial"
                   whileHover="hover"
@@ -374,6 +372,8 @@ function TournamentActionButtons({ tournamentId, adminId }) {
           </div>
         </div>
       </div>
+
+    
     </div>
   );
 };

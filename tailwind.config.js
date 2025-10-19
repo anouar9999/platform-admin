@@ -6,13 +6,15 @@ module.exports = {
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./node_modules/react-tailwindcss-datepicker/dist/index.esm.js"
+
   ],
   theme: {
     extend: {
       colors: {
-        'primary': '#d65032',
+        'primary': '#CCFFE5',
         'orange-mge':'#ff3d08',
-        'secondary':'#181818',
+        'secondary':'#0f172a',
         'dark':'#000000',
         'dark-gray':'#5E656D',
 
@@ -24,7 +26,11 @@ module.exports = {
         custom: ['nightWarrior', 'sans-serif'],
         pilot: ['pilot', 'sans-serif'],
         juvanze: ['juvanze', 'sans-serif'],
-        valorant: ['valorant', 'sans-serif']
+        valorant: ['valorant', 'sans-serif'],
+        'zentry': ['zentry', 'sans-serif'],
+        "circular-web": ["circular-web", "sans-serif"],
+
+
 
       },
       animation: {

@@ -1,7 +1,7 @@
 "use client"
 import React, { useEffect, useState } from 'react';
 import { ChevronRight, CircleUserRound, Gamepad2, Joystick, Plus, Shapes, Wallet, Settings, Users, Calendar, FileText, PlusCircle, MapPin } from 'lucide-react';
-import PrizeList from '@/app/admin/PrizeList';
+import PrizeList from '@/app/admin/components/PrizeList';
 import Image from 'next/image';
 export const runtime = 'edge';
 

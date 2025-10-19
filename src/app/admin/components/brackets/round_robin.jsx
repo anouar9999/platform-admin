@@ -15,7 +15,7 @@ import {
   FaEdit,
 } from 'react-icons/fa';
 import axios from 'axios';
-import GroupModal from '../../GroupModal';
+import GroupModal from '../GroupModal';
 import PlayoffsBracket from './PlayoffsBracket';
 
 const MultiGroupRoundRobinTournament = ({ tournamentId }) => {

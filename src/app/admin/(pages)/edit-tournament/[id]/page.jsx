@@ -4,12 +4,12 @@ import { useParams, useRouter } from 'next/navigation';
 import { Check, User, Users, ArrowLeft } from 'lucide-react';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import PrizePoolInput from '../../new-tournament/numberInput';
-import ParticipantInput from '../../new-tournament/participantInput';
-import TeamSizeInput from '../../new-tournament/TeamInput';
 import { useToast } from '@/utils/ToastProvider';
 import LoadingOverlay from '../../tournament/[slug]/Loading';
 import CompetitionTypeSelector from './CompetitionType';
+import ParticipantInput from '../../new-tournament/participantInput';
+import TeamSizeInput from '../../new-tournament/TeamInput';
+import PrizePoolInput from '../../new-tournament/numberInput';
 export const runtime = 'edge';
 
 const ParticipationTypeToggle = ({ value, onChange, disabled }) => {
@@ -412,7 +412,7 @@ const TournamentEdit = () => {
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="px-6 py-3 bg-primary font-ea-football text-white  angular-cut hover:bg-primary/90 transition-colors"
+                    className="px-6 py-3 bg-primary font-ea-football text-black  angular-cut hover:bg-primary/90 transition-colors"
                   >
                     METTRE A JOUR LE TOURNOI
                   </button>

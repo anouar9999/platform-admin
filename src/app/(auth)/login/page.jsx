@@ -1,28 +1,22 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import FloatingLabelInput from '@/app/components/input/input';
 import { Mail, User } from 'lucide-react';
 import * as Yup from 'yup';
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { GlowEffectContext } from '@/context/GlowEffectContext';
 
 export default function Login() {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('Admin@00');
-  const [email, setEmail] = useState('admin@gmail.com');
-  const [fullName, setFullName] = useState('');
-  const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState('');
-  const [errors, setErrors] = useState({});
-  const [isLoading, setIsLoading] = useState(false);
-  const [isAdminSetup, setIsAdminSetup] = useState(true);
   const router = useRouter();
-
-  // Define validation schemas
+  const { setshowGlow } = useContext(GlowEffectContext);
+  // Validation schemas
   const loginSchema = Yup.object().shape({
-    email: Yup.string()
-      .required('Email is required')
-      .email('Invalid email format'),
+    email: Yup.string().required('Email is required').email('Invalid email format'),
     password: Yup.string()
       .required('Password is required')
       .min(6, 'Password must be at least 6 characters'),
@@ -37,7 +31,7 @@ export default function Login() {
       .min(8, 'For security, passwords must be at least 8 characters')
       .matches(
         /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
-        'Include uppercase, lowercase, number, and special character for stronger security'
+        'Include uppercase, lowercase, number, and special character for stronger security',
       ),
     email: Yup.string().required('Email is required').email('Invalid email format'),
     fullName: Yup.string()
@@ -45,311 +39,301 @@ export default function Login() {
       .min(2, 'Full name must be at least 2 characters'),
   });
 
+  // Query: Check if admin setup is needed
+  const { data: adminSetupData, isLoading: isSetupLoading } = useQuery({
+    queryKey: ['adminSetup'],
+    queryFn: async () => {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/admin_setup.php?check_only=true`,
+      );
+      if (!res.ok) throw new Error('Failed to check admin setup');
+      return res.json();
+    },
+    staleTime: 1000 * 60, // 1 min
+  });
+
+  const isAdminSetup = adminSetupData?.isEmpty ?? true;
+
+  // Form
+  const formSchema = isAdminSetup ? setupSchema : loginSchema;
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm({
+    resolver: yupResolver(formSchema),
+    defaultValues: isAdminSetup
+      ? {
+          username: '',
+          password: 'Admin@00',
+          email: 'admin@gmail.com',
+          fullName: '',
+        }
+      : {
+          email: 'admin@gmail.com',
+          password: 'Admin@00',
+        },
+  });
+
+  // Query: Verify token on mount
   useEffect(() => {
-    checkAdminSetup();
-    
-    // Check for existing session_token
     const savedToken = localStorage.getItem('adminSessionToken');
     if (savedToken) {
-      // Verify token validity with backend before auto-login
-      verifyToken(savedToken);
-    }
-  }, []);
-  
-  const verifyToken = async (token) => {
-    try {
-      // You'll need to create this endpoint on your backend
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/verify_token.php`, {
+      fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/verify_token.php`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ session_token: token }),
-      });
-      
-      const data = await response.json();
-      if (data.valid) {
-        // Token is valid, redirect to dashboard
-        router.push('/');
-      } else {
-        // Token is invalid, clear stored credentials
-        localStorage.removeItem('adminSessionToken');
-        localStorage.removeItem('adminId');
-        localStorage.removeItem('adminUsername');
-      }
-    } catch (error) {
-      console.error('Error verifying token:', error);
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_token: savedToken }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.valid) router.push('/');
+          else {
+            localStorage.removeItem('adminSessionToken');
+            localStorage.removeItem('adminId');
+            localStorage.removeItem('adminUsername');
+          }
+        });
     }
-  };
+    // Reset form when isAdminSetup changes
+    reset(
+      false
+        ? {
+            username: '',
+            password: 'Admin@00',
+            email: 'admin@gmail.com',
+            fullName: '',
+          }
+        : {
+            email: 'admin@gmail.com',
+            password: 'Admin@00',
+          },
+    );
+    // eslint-disable-next-line
+  }, [isAdminSetup, reset, router]);
 
-  const checkAdminSetup = async () => {
-    try {
-      // Use a more efficient endpoint that performs a lightweight check
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/admin_setup.php?check_only=true`,
-        {
-          method: 'GET',
-        },
-      );
-
-      const data = await response.json();
-      setIsAdminSetup(data.isEmpty);
-    } catch (error) {
-      console.error('Error checking admin setup:', error);
-      // Default to login form if check fails
-      setIsAdminSetup(false);
-    }
-  };
-
-  const validateForm = async () => {
-    try {
-      const schema = isAdminSetup ? setupSchema : loginSchema;
-      const formData = isAdminSetup
-        ? { username, password, email, fullName }
-        : { email, password }; // Changed from username to email
-      
-      await schema.validate(formData, { abortEarly: false });
-      setErrors({});
-      return true;
-    } catch (validationErrors) {
-      const newErrors = {};
-      validationErrors.inner.forEach((err) => {
-        newErrors[err.path] = err.message;
-      });
-      setErrors(newErrors);
-      return false;
-    }
-  }
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-
-    // Validate form before submission
-    const isValid = await validateForm();
-    if (!isValid) return;
-
-    setIsLoading(true);
-
-    try {
+  // Mutation: Submit form
+  const { mutate, isPending } = useMutation({
+    mutationFn: async (formData) => {
+      setError('');
       const url = isAdminSetup
         ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/admin_setup.php`
         : `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/admin_login.php`;
 
       const requestBody = isAdminSetup
-        ? { username, password, email, full_name: fullName }
-        : { email, password, remember_me: rememberMe };
+        ? {
+            username: formData.username,
+            password: formData.password,
+            email: formData.email,
+            full_name: formData.fullName,
+          }
+        : {
+            email: formData.email,
+            password: formData.password,
+            remember_me: formData.rememberMe ?? true,
+          };
 
       const response = await fetch(url, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestBody),
       });
 
       const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || `HTTP error! status: ${response.status}`);
-      }
-
+      if (!response.ok) throw new Error(data.message || `HTTP error! status: ${response.status}`);
+      return data;
+    },
+    onSuccess: (data, formData) => {
+      setshowGlow(true);
       if (data.success || data.message === 'Admin created successfully') {
         if (!isAdminSetup) {
-          // Handle session token based on remember me preference
-          if (rememberMe) {
-            // Store in localStorage for persistent sessions
+          if (formData.rememberMe ?? true) {
             localStorage.setItem('adminSessionToken', data.session_token);
             localStorage.setItem('adminId', data.admin_id);
             localStorage.setItem('adminUsername', data.username);
           } else {
-            // Store in sessionStorage for temporary sessions
             sessionStorage.setItem('adminSessionToken', data.session_token);
             sessionStorage.setItem('adminId', data.admin_id);
             sessionStorage.setItem('adminUsername', data.username);
           }
         }
-        router.push('/admin/'); // Redirect to admin dashboard
+        router.push('/admin/');
       } else {
         setError(data.message || 'Operation failed');
       }
-    } catch (error) {
-      console.error('Error:', error);
-      setError(error.message || 'An error occurred. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    },
+    onError: (err) => {
+      setError(err.message || 'An error occurred. Please try again.');
+    },
+  });
+
+  if (isSetupLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-black">
+        <span className="text-white">Loading...</span>
+      </div>
+    );
+  }
 
   return (
-    <div className="relative min-h-screen flex flex-col md:flex-row">
+    <div className="relative min-h-screen flex flex-col md:flex-row bg-black/80">
       {/* Full screen background image */}
-      <div className="absolute inset-0 z-0">
-        <Image
-          src="https://moroccogamingexpo.ma/wp-content/uploads/2024/08/MGE-Jour-2-149-1-1024x683.jpg"
-          alt="Background"
-          layout="fill"
-          objectFit="cover"
-          priority
-          className="select-none"
-        />
-        {/* Gradient overlays - changed from gray-900 to black */}
-        <div className="absolute inset-0 bg-gradient-to-bl from-black/95 via-black/80 to-transparent"></div>
-        <div className="absolute inset-0 bg-gradient-to-l from-black/95 via-black/80 to-transparent"></div>
-      </div>
+    
 
       {/* Left side content - hidden on mobile */}
-      <div className="relative z-10 w-full md:w-1/2 p-12 hidden md:flex flex-col justify-center">
+      <div className="relative z-10 w-full md:w-[45%] lg:w-[40%] px-6 sm:px-10 md:px-12 py-12 flex flex-col justify-center bg-secondary">
         <div className="space-y-4 max-w-xl">
-          <div className="mb-6 w-56">
-            <Image
-              src="/images/logo-gamius-white.png"
-              alt="Gaming Expo"
-              width={220}
-              height={40}
-              className="w-full h-auto"
-            />
-          </div>
-
-          <h1 className="font-custom tracking-widest text-5xl font-bold text-white leading-tight">
-            Tournament
-            <br />
-            <span className="text-primary">Control Center</span>, Manage
-            <br />
-            Your Competitions
-          </h1>
-
-          <p className="text-white text-sm max-w-md">
-            Streamline your tournament operations with our secure management system
-          </p>
-        </div>
-      </div>
-
-      {/* Right side - Login Form */}
-      <div className="relative z-10 w-full md:w-1/2 min-h-screen flex flex-col items-center justify-center px-6 py-8">
-        {/* Logo container - centered on mobile */}
-        <div className="md:hidden w-48 mb-12">
-          
-        </div>
-
-        <div className="w-full max-w-md">
-          <div className="space-y-3 mb-8 text-center md:text-left">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl tracking-wider text-white font-custom leading-tight">
-              {isAdminSetup ? 'First-Time Setup' : 'Welcome Back'} <br />
-              {isAdminSetup ? 'Administrator' : 'to your dashboard'}<span className="text-primary">.</span>
-            </h2>
-            <p className="text-white/50 text-sm sm:text-sm">
-              {isAdminSetup
-                ? 'Create your administrator account to begin organizing tournaments'
-                : 'Sign in to access your tournament management tools'}
-            </p>
-          </div>
-
-          {error && (
-            <div className="rounded-lg p-4 mb-6">
-              <p className="text-red-500 text-sm text-center">{error}</p>
+          {!isAdminSetup && (
+            <div className=" absolute top-8  mb-6 w-32 xl:w-44">
+              <Image
+                src="/images/logo-gamius-white.png"
+                alt="Gaming Expo"
+                width={120}
+                height={40}
+                className="w-full h-auto"
+              />
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-           
-            {isAdminSetup && ( 
-              <>
-              <FloatingLabelInput
-                label="Username"
-                icon={User}
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-              />
-              {errors.username && <p className="text-red-500 text-xs mt-1">{errors.username}</p>}
-              </>
+          <div className="w-full max-w-md">
+            <div className="space-y-16 mb-8 text-center md:text-left ml-0 md:ml-2 lg:ml-3">
+              <h2 className="text-xl sm:text-2xl md:text-3xl  tracking-wider text-white font-custom leading-tight">
+                {isAdminSetup ? 'First-Time Setup' : 'Welcome To Gamius Area'} <br />
+                {isAdminSetup ? 'Administrator' : 'to your dashboard'}
+                <span className="text-[#03C7FD] font-ea-football"> .</span>
+                <p className="text-white/30 text-[0.65rem]  font-ea-football mt-1">
+                  {isAdminSetup
+                    ? 'Create your administrator account to begin organizing tournaments'
+                    : 'Sign in to access your tournament management tools'}
+                </p>
+              </h2>
+            </div>
+
+            {error && (
+              <div className="rounded-lg p-4 mb-6">
+                <p className="text-red-500 text-sm text-center">{error}</p>
+              </div>
             )}
 
-            {isAdminSetup && (
-              <>
+            <form onSubmit={handleSubmit((data) => mutate(data))} className="space-y-8 mt-16  ">
+              {isAdminSetup && (
+                <>
+                  <FloatingLabelInput label="Username" icon={User} {...register('username')} />
+                  {errors.username && (
+                    <p className="text-red-500 text-xs mt-1">{errors.username.message}</p>
+                  )}
+                </>
+              )}
+
+              {isAdminSetup && (
                 <div>
-                  <FloatingLabelInput
-                    label="Full Name"
-                    icon={User}
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                  />
+                  <FloatingLabelInput label="Full Name" icon={User} {...register('fullName')} />
                   {errors.fullName && (
-                    <p className="text-red-500 text-xs mt-1">{errors.fullName}</p>
+                    <p className="text-red-500 text-xs mt-1">{errors.fullName.message}</p>
                   )}
                 </div>
-              </>
-            )}
-            
-            <div>
-              <FloatingLabelInput
-                label="Email"
-                type="email"
-                icon={Mail}
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-              {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
-            </div>
-            
-            <div>
-              <FloatingLabelInput
-                label="Password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-              {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
-            </div>
-
-            {/* {!isAdminSetup && (
-              <div className="flex items-center">
-                <input
-                  id="remember-me"
-                  name="remember-me"
-                  type="checkbox"
-                  className="h-4 w-4 text-primary focus:ring-primary border-black rounded bg-black"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-white/70">
-                  Keep me signed in
-                </label>
-              </div>
-            )} */}
-
-            <button
-              type="submit"
-              className="w-full bg-primary text-base sm:text-[12pt] text-white py-3 font-custom tracking-widest rounded-full hover:bg-primary/60 transition-colors mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <div className="flex items-center justify-center gap-2">
-                  <svg
-                    className="w-5 h-5 animate-spin"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <circle
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                      strokeLinecap="round"
-                      strokeDasharray="31.4 31.4"
-                      strokeDashoffset="15.7"
-                    />
-                  </svg>
-                  <span className="animate-pulse">Processing...</span>
-                </div>
-              ) : (
-                isAdminSetup ? 'Complete Setup' : 'Access Dashboard'
               )}
-            </button>
-          </form>
+
+              <div>
+                <FloatingLabelInput label="Email" type="email" icon={Mail} {...register('email')} />
+                {errors.email && (
+                  <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>
+                )}
+              </div>
+
+              <div>
+                <FloatingLabelInput label="Password" type="password" {...register('password')} />
+                {errors.password && (
+                  <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>
+                )}
+              </div>
+
+              {/* Uncomment if you want to use remember me */}
+              {!isAdminSetup && (
+                <div className="flex items-center justify-between lg:ml-3">
+                  <div className="flex items-center">
+                    <input
+                      id="remember-me"
+                      name="rememberMe"
+                      type="checkbox"
+                      className="h-4 w-4 text-primary focus:ring-primary border-black rounded bg-black"
+                      {...register('rememberMe')}
+                      defaultChecked
+                    />
+                    <label
+                      htmlFor="remember-me"
+                      className="ml-2 block text-sm text-white/70 font-ea-football"
+                    >
+                      Keep me signed in
+                    </label>
+                  </div>
+
+                  {/* Forgot password link */}
+                  <button
+                    type="button"
+                    onClick={() => router.push('/forgot-password')}
+                    className="text-sm text-primary hover:underline font-ea-football font-medium"
+                  >
+                    Forgot Password <span className="font-mono text-primary">?</span>
+                  </button>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                className="w-[50%]  bg-primary text-base sm:text-[12pt] text-black px-3 py-2.5 font-custom rounded hover:bg-primtext-primary/90 transition-colors mt-8 disabled:opacity-50 disabled:cursor-not-allowed "
+                disabled={isPending}
+              >
+                {isPending ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <svg
+                      className="w-5 h-5 animate-spin"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <circle
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                        strokeLinecap="round"
+                        strokeDasharray="31.4 31.4"
+                        strokeDashoffset="15.7"
+                      />
+                    </svg>
+                    <span className="animate-pulse">Processing...</span>
+                  </div>
+                ) : isAdminSetup ? (
+                  'Complete Setup'
+                ) : (
+                  <div>Sign In</div>
+                )}
+              </button>
+            </form>
+          </div>
         </div>
+      </div>
+
+      {/* Overlay between left and right sections */}
+      <div className="absolute top-0 left-[45%] md:left-[45%] lg:left-[40%] h-full w-2 z-20 pointer-events-none">
+        <div className="h-full w-full bg-gradient-to-r from-[#11243D]/90 via-[#11243D]/60 to-transparent"></div>
+      </div>
+
+      {/* Right side - Background Image Only */}
+      <div className="relative w-full md:w-[60%] h-screen">
+        {/* Background image */}
+        <img
+          src="https://moroccogamingexpo.ma/wp-content/uploads/2025/08/1V2A0517-scaled.jpg"
+          alt="Gaming Background"
+          fill
+          className="object-cover select-none h-screen opacity-60"
+          priority
+        />
+
+        {/* Overlay */}
+        <div className="absolute inset-0 bg-[#11243D]/10"></div>
       </div>
     </div>
   );

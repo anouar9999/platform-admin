@@ -28,9 +28,10 @@ const SearchInput = ({ value, onChange, placeholder = "Search participants..." }
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
         placeholder={placeholder}
-        className={`w-full pl-12 pr-10 py-3 bg-secondary text-white 
+        className={`w-full
+           pl-12 pr-10 py-3 bg-dark text-white 
            outline-none transition-all duration-200
-          placeholder-gray-500  angular-cut
+          placeholder-gray-500  
          `}
       />
 

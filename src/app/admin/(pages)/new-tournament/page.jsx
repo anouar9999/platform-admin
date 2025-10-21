@@ -38,9 +38,9 @@ const steps = [
   { id: 4, title: 'Format et Structure', icon: LayoutGrid },
   { id: 5, title: 'Calendrier', icon: CalendarDays },
   { id: 6, title: 'Prix et Détails', icon: BadgeDollarSign },
-  { id: 7, title: 'Type de Bracket', icon: Target }, // New bracket type step
-  { id: 8, title: 'Format Tournoi', icon: LayoutGrid }, // Moved from 7 to 8
-  { id: 9, title: 'Stream URL', icon: LinkIcon }, // Moved from 8 to 9
+  { id: 7, title: 'Type de Bracket', icon: Target },
+  { id: 8, title: 'Format Tournoi', icon: LayoutGrid },
+  { id: 9, title: 'Stream URL', icon: LinkIcon },
 ];
 
 const formatDate = (dateString) => {
@@ -55,26 +55,57 @@ const formatDate = (dateString) => {
   });
 };
 const createTournament = async (formData) => {
+  console.log('=== INCOMING FORM DATA ===');
+  
   const formDataToSend = new FormData();
 
+  // Field mapping from frontend to backend
+  const fieldMapping = {
+    name: 'nom_des_qualifications',
+    description: 'description_des_qualifications',
+  };
+
   Object.entries(formData).forEach(([key, value]) => {
+    if (value instanceof File) {
+      console.log(`Processing: ${key} = [File: ${value.name}, Size: ${value.size} bytes]`);
+    } else if (value instanceof Date) {
+      console.log(`Processing: ${key} = [Date: ${value.toISOString()}]`);
+    } else {
+      console.log(`Processing: ${key} = ${value}`);
+    }
+    
     if (value !== null && value !== '') {
+      // Use mapped field name for backend
+      const backendKey = fieldMapping[key] || key;
+      
       if (
         key === 'start_date' ||
         key === 'end_date' ||
         key === 'registration_start' ||
         key === 'registration_end'
       ) {
-        formDataToSend.append(key, value ? value.toISOString() : '');
+        formDataToSend.append(backendKey, value ? value.toISOString() : '');
       } else {
-        formDataToSend.append(key, value);
+        formDataToSend.append(backendKey, value);
       }
     }
   });
 
+  // Debug: Show what's actually being sent
+  console.log('=== FORM DATA BEING SENT ===');
+  for (let [key, value] of formDataToSend.entries()) {
+    if (value instanceof File) {
+      console.log(`${key}: [File: ${value.name}]`);
+    } else {
+      console.log(`${key}: ${value}`);
+    }
+  }
+
   const apiUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
   const response = await fetch(`${apiUrl}/api/new_tournament.php`, {
     method: 'POST',
+    credentials: 'include',
+    mode: 'cors',
     body: formDataToSend,
   });
 
@@ -91,6 +122,7 @@ const createTournament = async (formData) => {
 
   return response.json();
 };
+
 const TournamentCreationSteps = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [imagePreview, setImagePreview] = useState(null);
@@ -107,45 +139,43 @@ const TournamentCreationSteps = () => {
   });
   const router = useRouter();
 
-  const {
-    control,
-    handleSubmit,
-    watch,
-    setValue,
-    formState: { errors, isValid },
-    trigger,
-    getValues,
-  } = useForm({
-    mode: 'onChange',
-    defaultValues: {
-      name: '',
-      image: null,
-      competition_type: '',
-      match_format: '',
-      type_de_jeu: '',
-      participation_type: 'participant',
-      nombre_maximum: '',
-      bracket_type: '',
-      start_date: null,
-      end_date: null,
-      registration_start: null,
-      registration_end: null,
-      description_des_qualifications: '',
-      prize_pool: '',
-      rules: '',
-      stream_url: '',
-    },
-  });
+const {
+  control,
+  handleSubmit,
+  watch,
+  setValue,
+  formState: { errors, isValid },
+  trigger,
+  getValues,
+} = useForm({
+  mode: 'onChange',
+  defaultValues: {
+    name: '', // ✅ Use 'name' instead of 'nom_des_qualifications'
+    image: null,
+    competition_type: '',
+    match_format: '',
+    type_de_jeu: '',
+    participation_type: 'individual',
+    nombre_maximum: '',
+    bracket_type: '',
+    start_date: null,
+    end_date: null,
+    registration_start: null,
+    registration_end: null,
+    description: '', // ✅ Use 'description' instead of 'description_des_qualifications'
+    prize_pool: '',
+    rules: '',
+    stream_url: '',
+  },
+});
 
   const watchedFields = watch();
   const selectedGame = watchedFields.competition_type;
   const participationType = watchedFields.participation_type;
+  
   const mutation = useMutation({
     mutationFn: createTournament,
     onSuccess: (data) => {
-      // Invalidate tournaments cache to refetch updated data
-      // queryClient.invalidateQueries({ queryKey: ['tournaments'] });
-
       setshowGlow(true);
       router.push('/admin/tournaments');
     },
@@ -154,20 +184,25 @@ const TournamentCreationSteps = () => {
       alert(error.message || 'Erreur lors de la création du tournoi');
     },
   });
+  
   const nextStep = async (e) => {
-    // Add this to prevent any default form behavior
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
+  if (e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
 
-    const fieldsToValidate = getFieldsForStep(currentStep);
-    const isStepValid = await trigger(fieldsToValidate);
+  const fieldsToValidate = getFieldsForStep(currentStep);
+  const isStepValid = await trigger(fieldsToValidate);
 
-    if (isStepValid && currentStep < steps.length) {
-      setCurrentStep(currentStep + 1);
-    }
-  };
+  // Log current values for debugging
+  const currentValues = getValues();
+  console.log('Current step values:', currentValues);
+
+  if (isStepValid && currentStep < steps.length) {
+    setCurrentStep(currentStep + 1);
+  }
+};
+  
   useEffect(() => {
     if (watchedFields.start_date || watchedFields.end_date) {
       setTournamentDateRange({
@@ -191,30 +226,32 @@ const TournamentCreationSteps = () => {
       setCurrentStep(currentStep - 1);
     }
   };
-  const getFieldsForStep = (step) => {
-    switch (step) {
-      case 1:
-        return ['name'];
-      case 2:
-        return ['image'];
-      case 3:
-        return ['competition_type'];
-      case 4:
-        return ['rules'];
-      case 5:
-        return ['start_date', 'registration_start'];
-      case 6:
-        return ['prize_pool'];
-      case 7:
-        return ['bracket_type']; // New bracket type step
-      case 8:
-        return ['match_format', 'type_de_jeu', 'nombre_maximum']; // Updated format step
-      case 9: // Stream URL moved to step 9
-        return ['stream_url'];
-      default:
-        return [];
-    }
-  };
+  
+ const getFieldsForStep = (step) => {
+  switch (step) {
+    case 1:
+      return ['nom_des_qualifications']; // ✅ Changed from 'name'
+    case 2:
+      return ['image'];
+    case 3:
+      return ['competition_type'];
+    case 4:
+      return ['rules'];
+    case 5:
+      return ['start_date', 'registration_start'];
+    case 6:
+      return ['prize_pool'];
+    case 7:
+      return ['bracket_type'];
+    case 8:
+      return ['match_format', 'type_de_jeu', 'nombre_maximum'];
+    case 9:
+      return ['stream_url'];
+    default:
+      return [];
+  }
+};
+  
   const mockGames = [
     {
       id: 1,
@@ -265,190 +302,225 @@ const TournamentCreationSteps = () => {
         'https://images.unsplash.com/photo-1556075798-4825dfaaf498?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
     },
   ];
-  const onSubmit = async (data) => {
-    console.log('Tournament Data:', data);
-
-    mutation.mutate(data);
+  
+const onSubmit = async (data) => {
+  console.log('=== FORM SUBMISSION STARTED ===');
+  console.log('=== ALL FORM DATA ===');
+  
+  // Log all fields
+  Object.keys(data).forEach(key => {
+    const value = data[key];
+    if (value instanceof File) {
+      console.log(`${key}: [File: ${value.name}]`);
+    } else if (value instanceof Date) {
+      console.log(`${key}: [Date: ${value.toISOString()}]`);
+    } else {
+      console.log(`${key}: ${value}`);
+    }
+  });
+  
+  // ✅ FIX: Match the actual form field names
+  const requiredValidation = {
+    name: 'Nom du tournoi', // ✅ Changed to match form field
+    start_date: 'Date de début',
+    rules: 'Règles',
+    competition_type: 'Type de jeu',
+    nombre_maximum: 'Nombre de participants'
   };
+  
+  const missing = [];
+  Object.entries(requiredValidation).forEach(([field, label]) => {
+    if (!data[field] || data[field] === '') {
+      missing.push(label);
+      console.error(`❌ Missing: ${field}`);
+    } else {
+      const value = data[field] instanceof File 
+        ? `[File: ${data[field].name}]` 
+        : data[field] instanceof Date
+        ? data[field].toISOString()
+        : data[field];
+      console.log(`✅ Present: ${field} = ${value}`);
+    }
+  });
+  
+  if (missing.length > 0) {
+    alert(`Champs requis manquants: ${missing.join(', ')}`);
+    return;
+  }
+
+  mutation.mutate(data);
+};
 
   const formatDateForInput = (dateValue) => {
     if (!dateValue) return '';
-
     try {
       const date = new Date(dateValue);
-      // Check if the date is valid
-      if (isNaN(date.getTime())) {
-        return '';
-      }
+      if (isNaN(date.getTime())) return '';
       return date.toISOString().slice(0, 16);
     } catch (error) {
       console.warn('Invalid date value:', dateValue);
       return '';
     }
   };
+  
   const parseDateFromInput = (inputValue) => {
     if (!inputValue) return null;
-
     try {
       const date = new Date(inputValue);
-      // Check if the date is valid
-      if (isNaN(date.getTime())) {
-        return null;
-      }
+      if (isNaN(date.getTime())) return null;
       return date;
     } catch (error) {
       console.warn('Invalid input date:', inputValue);
       return null;
     }
   };
+  
   const renderStep = () => {
     switch (currentStep) {
       case 1:
-        return (
-          <div className="space-y-8">
-            <div className="* space-x-3 mb-16">
-              <h3 className="text-3xl text-white  font-custom tracking-wider">
-                {' '}
-                let s start with Basic Information
-              </h3>
-              <p className="text-gray-400 text-sm">
-                Choisissez un nom accrocheur pour votre tournoi
-              </p>
-            </div>
+  return (
+    <div className="space-y-8">
+      <div className="* space-x-3 mb-16">
+        <h3 className="text-3xl text-white font-custom tracking-wider">
+          Let s start with Basic Information
+        </h3>
+        <p className="text-gray-400 text-sm">
+          Choisissez un nom accrocheur pour votre tournoi
+        </p>
+      </div>
 
-            <Controller
-              name="name"
-              control={control}
-              rules={{
-                required: 'Le nom du tournoi est requis',
-                minLength: { value: 3, message: 'Le nom doit contenir au moins 3 caractères' },
-              }}
-              render={({ field }) => (
-                <div>
-                  <FloatingLabelInput
-                    {...field}
-                    type="text"
-                    label="Nom du Tournoi"
-                    className={`w-full bg-gray-800 text-white rounded-xl px-6 py-4 text-lg
-                        focus:outline-none focus:ring-2 transition-all duration-300
-                        ${
-                          errors.name
-                            ? 'focus:ring-red-500 border border-red-500'
-                            : 'focus:ring-blue-500'
-                        }`}
-                    placeholder="Entrez le nom de votre tournoi"
-                  />
-                  {errors.name && (
-                    <p className="text-red-500 text-sm mt-2 flex items-center">
-                      <AlertCircle className="w-4 h-4 mr-1" />
-                      {errors.name.message}
-                    </p>
-                  )}
-                </div>
-              )}
+      <Controller
+  name="name" // ✅ Changed from "nom_des_qualifications"
+        control={control}
+        rules={{
+          required: 'Le nom du tournoi est requis',
+          minLength: { value: 3, message: 'Le nom doit contenir au moins 3 caractères' },
+        }}
+        render={({ field }) => (
+          <div>
+            <FloatingLabelInput
+              {...field}
+              type="text"
+              label="Nom du Tournoi"
+              className={`w-full bg-gray-800 text-white rounded-xl px-6 py-4 text-lg
+                  focus:outline-none focus:ring-2 transition-all duration-300
+                  ${
+                    errors.nom_des_qualifications // ✅ Changed from errors.name
+                      ? 'focus:ring-red-500 border border-red-500'
+                      : 'focus:ring-blue-500'
+                  }`}
+              placeholder="Entrez le nom de votre tournoi"
             />
-          </div>
-        );
-
-      case 2:
-        return (
-          <div className="space-y-6">
-            <div className="space-x-3 mb-16">
-              <h3 className="text-3xl text-white font-custom tracking-wider">
-                let s start with Basic Information
-              </h3>
-              <p className="text-gray-400 text-sm">
-                Choisissez un nom accrocheur pour votre tournoi
+            {errors.nom_des_qualifications && ( // ✅ Changed from errors.name
+              <p className="text-red-500 text-sm mt-2 flex items-center">
+                <AlertCircle className="w-4 h-4 mr-1" />
+                {errors.nom_des_qualifications.message} {/* ✅ Changed */}
               </p>
-            </div>
+            )}
+           
+          </div>
+        )}
+      />
+    </div>
+  );
+case 2:
+  return (
+    <div className="space-y-6">
+      <div className="space-x-3 mb-16">
+        <h3 className="text-3xl text-white font-custom tracking-wider">
+          Tournament Image
+        </h3>
+        <p className="text-gray-400 text-sm">
+          Ajoutez une image pour votre tournoi
+        </p>
+      </div>
 
-            <Controller
-              name="image"
-              control={control}
-              rules={{ required: 'Une image est requise pour le tournoi' }}
-              render={({ field: { onChange, value, ...field } }) => (
-                <div className="space-y-4">
-                  <div className="relative font-ea-football">
-                    <div className="space-y-4">
-                      {/* File Preview - shown when file is selected */}
+      <Controller
+        name="image"
+        control={control}
+        rules={{ required: 'Une image est requise pour le tournoi' }}
+        render={({ field: { onChange, value, ...field } }) => (
+          <div className="space-y-4">
+            <div className="relative font-ea-football">
+              <div className="space-y-4">
+                <div className="border-2 border-dashed border-gray-600 rounded-xl p-12 text-center bg-gray-800/50 hover:border-gray-500 hover:bg-gray-800/70 transition-all duration-200 cursor-pointer relative">
+                  <input
+                    {...field}
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+                      if (file) {
+                        if (file.size > 5 * 1024 * 1024) {
+                          alert("L'image ne doit pas dépasser 5MB");
+                          return;
+                        }
 
-                      {/* Upload Area */}
-                      <div className="border-2 border-dashed border-gray-600 rounded-xl p-12 text-center bg-gray-800/50 hover:border-gray-500 hover:bg-gray-800/70 transition-all duration-200 cursor-pointer relative">
-                        <input
-                          {...field}
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => {
-                            const file = e.target.files[0];
-                            if (file) {
-                              if (file.size > 5 * 1024 * 1024) {
-                                alert("L'image ne doit pas dépasser 5MB");
-                                return;
-                              }
+                        const reader = new FileReader();
+                        reader.onloadend = () => setImagePreview(reader.result);
+                        reader.readAsDataURL(file);
 
-                              const reader = new FileReader();
-                              reader.onloadend = () => setImagePreview(reader.result);
-                              reader.readAsDataURL(file);
+                        onChange(file);
+                      }
+                    }}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  />
 
-                              onChange(file);
-                            }
-                          }}
-                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                        />
-
-                        <div className="space-y-4">
-                          {!value && (
-                            <div className="mx-auto w-12 h-12 bg-gray-700 rounded-lg flex items-center justify-center border border-gray-600">
-                              <Upload className="w-6 h-6 text-gray-400" />
-                            </div>
-                          )}
-                          {imagePreview && (
-                            <div className="flex justify-center">
-                              <img
-                                src={imagePreview}
-                                alt="Preview"
-                                className="h-32 w-fit object-cover rounded-xl border-2 border-gray-700"
-                              />
-                            </div>
-                          )}
-                          <div>
-                            <p className="text-white text-base mb-1 ">
-                              <span className="text-[#03C7FD] font-medium underline cursor-pointer">
-                                Click to upload
-                              </span>{' '}
-                              or drag and drop
-                            </p>
-                            <p className="text-gray-400 text-sm">
-                              Upload images (MAX. file size 5MB)
-                            </p>
-                          </div>
-                        </div>
+                  <div className="space-y-4">
+                    {!value && (
+                      <div className="mx-auto w-12 h-12 bg-gray-700 rounded-lg flex items-center justify-center border border-gray-600">
+                        <Upload className="w-6 h-6 text-gray-400" />
                       </div>
-                    </div>
-
-                    {errors.image && (
-                      <p className="text-red-500 text-sm mt-2 flex items-center">
-                        <AlertCircle className="w-4 h-4 mr-1" />
-                        {errors.image.message}
-                      </p>
                     )}
+                    {imagePreview && (
+                      <div className="flex justify-center">
+                        <img
+                          src={imagePreview}
+                          alt="Preview"
+                          className="h-32 w-fit object-cover rounded-xl border-2 border-gray-700"
+                        />
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-white text-base mb-1 ">
+                        <span className="text-[#03C7FD] font-medium underline cursor-pointer">
+                          Click to upload
+                        </span>{' '}
+                        or drag and drop
+                      </p>
+                      <p className="text-gray-400 text-sm">
+                        Upload images (MAX. file size 5MB)
+                      </p>
+                    </div>
                   </div>
                 </div>
-              )}
-            />
-          </div>
-        );
+              </div>
 
+              {errors.image && (
+                <p className="text-red-500 text-sm mt-2 flex items-center">
+                  <AlertCircle className="w-4 h-4 mr-1" />
+                  {errors.image.message}
+                </p>
+              )}
+              
+            
+            </div>
+          </div>
+        )}
+      />
+    </div>
+  );
+    
       case 3:
         return (
           <>
             <div className="space-y-4">
               <div className="space-x-3 mb-16">
                 <h3 className="text-3xl text-white font-custom tracking-wider">
-                  let s start with Basic Information
+                  Choose Game Type
                 </h3>
                 <p className="text-gray-400 text-sm">
-                  Choisissez un nom accrocheur pour votre tournoi
+                  Sélectionnez le jeu pour votre tournoi
                 </p>
               </div>
 
@@ -464,7 +536,6 @@ const TournamentCreationSteps = () => {
                           <div
                             key={game.id}
                             onClick={() => {
-                              // Add transition delay before setting value
                               setTimeout(() => {
                                 field.onChange(game.name);
                               }, 300);
@@ -477,10 +548,7 @@ const TournamentCreationSteps = () => {
                               transitionDelay: `${index * 50}ms`,
                             }}
                           >
-                            {/* Overlay */}
                             <div className="absolute inset-0 bg-black/60 hover:bg-black/50 transition-all duration-300"></div>
-
-                            {/* Content */}
                             <div className="relative z-10 text-center">
                               <h3 className="font-medium text-sm text-gray-100">{game.name}</h3>
                             </div>
@@ -489,12 +557,10 @@ const TournamentCreationSteps = () => {
                       </div>
                     ) : (
                       <div className="flex flex-col items-center animate-fade-in font-ea-football">
-                        {/* Find selected game */}
                         {(() => {
                           const selectedGame = mockGames.find((game) => game.name === field.value);
                           return selectedGame ? (
                             <>
-                              {/* Selected Game Display */}
                               <div
                                 className="relative w-80 h-48 rounded-lg overflow-hidden shadow-2xl"
                                 style={{
@@ -503,29 +569,20 @@ const TournamentCreationSteps = () => {
                                   backgroundPosition: 'center',
                                 }}
                               >
-                                {/* Selected Overlay */}
-
-                                {/* Selected Badge */}
-
-                                {/* Game Icon */}
                                 <div
                                   onClick={() => field.onChange('')}
                                   className="absolute inset-0 flex items-center justify-center"
                                 ></div>
                               </div>
 
-                              {/* Game Title */}
                               <div className=" mt-2 text-center">
                                 <p className="text-xs text-gray-400 font-pilot capitalize">
-                                  {' '}
-                                  the game you selected :
+                                  The game you selected:
                                 </p>
                                 <h2 className="text-4xl text-[#03C7FD] font-bold mb-2">
                                   {selectedGame.name}
                                 </h2>
                               </div>
-
-                              {/* Action Buttons */}
                             </>
                           ) : null;
                         })()}
@@ -538,6 +595,7 @@ const TournamentCreationSteps = () => {
                         {errors.competition_type.message}
                       </p>
                     )}
+                   
                   </div>
                 )}
               />
@@ -567,15 +625,14 @@ const TournamentCreationSteps = () => {
           <div className="space-y-8">
             <div className="space-x-3 mb-16">
               <h3 className="text-3xl text-white font-custom tracking-wider">
-                let s start with Basic Information
+                Tournament Rules
               </h3>
               <p className="text-gray-400 text-sm">
-                Choisissez un nom accrocheur pour votre tournoi
+                Définissez les règles de votre tournoi
               </p>
             </div>
 
-            <div className="grid grid-cols-1   gap-6">
-              {/* Match Format */}
+            <div className="grid grid-cols-1 gap-6">
               <Controller
                 name="rules"
                 control={control}
@@ -598,6 +655,7 @@ const TournamentCreationSteps = () => {
                     {errors.rules && (
                       <p className="text-red-500 text-sm mt-2">{errors.rules.message}</p>
                     )}
+                  
                   </div>
                 )}
               />
@@ -605,7 +663,6 @@ const TournamentCreationSteps = () => {
           </div>
         );
 
-      // Replace case 5 with this simpler approach using native HTML date inputs
       case 5:
         return (
           <div className="space-y-8">
@@ -617,7 +674,6 @@ const TournamentCreationSteps = () => {
             </div>
 
             <div className="grid grid-cols-1 gap-6">
-              {/* Tournament Start Date */}
               <Controller
                 name="start_date"
                 control={control}
@@ -640,11 +696,11 @@ const TournamentCreationSteps = () => {
                         {errors.start_date.message}
                       </p>
                     )}
+        
                   </div>
                 )}
               />
 
-              {/* Tournament End Date */}
               <Controller
                 name="end_date"
                 control={control}
@@ -665,7 +721,6 @@ const TournamentCreationSteps = () => {
                 )}
               />
 
-              {/* Registration Start Date */}
               <Controller
                 name="registration_start"
                 control={control}
@@ -693,7 +748,6 @@ const TournamentCreationSteps = () => {
                 )}
               />
 
-              {/* Registration End Date */}
               <Controller
                 name="registration_end"
                 control={control}
@@ -715,7 +769,6 @@ const TournamentCreationSteps = () => {
                 )}
               />
 
-              {/* Date Summary */}
               {watchedFields.start_date && watchedFields.registration_start && (
                 <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
                   <h4 className="text-sm font-medium text-gray-300 mb-3">Résumé des dates</h4>
@@ -745,7 +798,6 @@ const TournamentCreationSteps = () => {
       case 6:
         return (
           <div className="space-y-12">
-            {/* Header Section */}
             <div className="text-start space-y-4 mb-12">
               <h3 className="text-3xl text-white font-custom tracking-wider">
                 Prize Pool & Tournament Details
@@ -755,7 +807,6 @@ const TournamentCreationSteps = () => {
               </p>
             </div>
 
-            {/* Prize Pool Section */}
             <div className=" rounded-3xl font-ea-football  backdrop-blur-sm">
               <Controller
                 name="prize_pool"
@@ -785,6 +836,7 @@ const TournamentCreationSteps = () => {
                         </p>
                       </div>
                     )}
+             
                   </div>
                 )}
               />
@@ -796,7 +848,6 @@ const TournamentCreationSteps = () => {
         return (
           <div className="min-h-screen font-ea-football">
             <div className="max-w-6xl space-y-12">
-              {/* Header */}
               <div className="space-y-6 relative">
                 <div className="absolute inset-0 rounded-lg blur-3xl"></div>
                 <div className="relative">
@@ -824,6 +875,7 @@ const TournamentCreationSteps = () => {
                             {errors.bracket_type.message}
                           </div>
                         )}
+                      
                       </div>
                     )}
                   />
@@ -832,6 +884,7 @@ const TournamentCreationSteps = () => {
             </div>
           </div>
         );
+        
       case 8:
         const participationType = watch('participation_type');
         const selectedGameName = watch('competition_type');
@@ -839,7 +892,6 @@ const TournamentCreationSteps = () => {
         return (
           <div className="min-h-screen font-ea-football">
             <div className="max-w-6xl space-y-12">
-              {/* Header */}
               <div className="space-y-6 relative">
                 <div className="absolute inset-0 rounded-lg blur-3xl"></div>
                 <div className="relative">
@@ -853,9 +905,7 @@ const TournamentCreationSteps = () => {
               </div>
 
               <div className="space-y-8">
-                {/* Match Format & Game Type */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  {/* Match Format */}
                   <div>
                     <Controller
                       name="match_format"
@@ -879,7 +929,6 @@ const TournamentCreationSteps = () => {
                     />
                   </div>
 
-                  {/* Game Type */}
                   <div>
                     <Controller
                       name="type_de_jeu"
@@ -900,7 +949,6 @@ const TournamentCreationSteps = () => {
                   </div>
                 </div>
 
-                {/* Participation Type */}
                 <div>
                   <Controller
                     name="participation_type"
@@ -924,9 +972,7 @@ const TournamentCreationSteps = () => {
                   />
                 </div>
 
-                {/* Configuration Row */}
                 <div className="grid grid-cols-1 md:grid-cols-1 gap-8">
-                  {/* Participants - hide if team */}
                   {participationType !== 'team' && (
                     <div>
                       <Controller
@@ -957,6 +1003,7 @@ const TournamentCreationSteps = () => {
                                 {errors.nombre_maximum.message}
                               </div>
                             )}
+                          
                           </div>
                         )}
                       />
@@ -964,43 +1011,9 @@ const TournamentCreationSteps = () => {
                   )}
                 </div>
 
-                {/* Team Configuration - only if team is selected */}
                 {participationType === 'team' && (
                   <div className="">
                     <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
-                      {/* Number of Teams */}
-                      {participationType !== 'team' && (
-                        <Controller
-                          name="nombre_maximum"
-                          control={control}
-                          rules={{
-                            required: "Nombre d'équipes requis",
-                            min: { value: 2, message: 'Minimum 2 équipes' },
-                            max: { value: 64, message: 'Maximum 64 équipes' },
-                          }}
-                          render={({ field }) => (
-                            <div className="relative">
-                              <ParticipantInput
-                                {...field}
-                                type="number"
-                                min="2"
-                                max="64"
-                                placeholder="Nombre d'équipes"
-                                className={`w-full bg-[#21324F]/80 backdrop-blur-sm text-white border border-[#21324F]/60 
-                              rounded-2xl px-4 py-4 transition-all duration-300
-                              hover:bg-[#21324F] hover:border-blue-400/50
-                              focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50
-                              ${errors.nombre_maximum ? 'border-red-500/70' : ''}`}
-                              />
-                              {errors.nombre_maximum && (
-                                <div className="absolute -bottom-6 left-0 text-red-400 text-sm">
-                                  {errors.nombre_maximum.message}
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        />
-                      )}
                       <Controller
                         name="nombre_maximum"
                         control={control}
@@ -1031,6 +1044,7 @@ const TournamentCreationSteps = () => {
             </div>
           </div>
         );
+        
       case 9:
         return (
           <div className="space-y-6">
@@ -1171,14 +1185,17 @@ const TournamentCreationSteps = () => {
             ) : (
               <button
                 type="submit"
-                className="flex items-center px-8 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all duration-300 font-medium"
+                disabled={mutation.isPending}
+                className="flex items-center px-8 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all duration-300 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Trophy className="w-5 h-5 mr-2" />
-                Créer le Tournoi
+                {mutation.isPending ? 'Création...' : 'Créer le Tournoi'}
               </button>
             )}
           </div>
         </form>
+
+       
       </div>
     </div>
   );

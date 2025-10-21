@@ -29,6 +29,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import PlayerCard from './UserCard';
+import EditUserModal from './EditUser';
 
 // Stats Card Component
 const StatsCard = ({ icon: Icon, label, value, color }) => (
@@ -85,8 +86,6 @@ const Dropdown = ({ label, options, value, onChange, icon: Icon }) => {
     </div>
   );
 };
-
-
 
 // Player Row Component for List View
 const PlayerRow = ({ player, onEdit, onDelete, onView }) => {
@@ -302,6 +301,8 @@ const PlayersManagement = () => {
   const [error, setError] = useState(null);
   const [viewMode, setViewMode] = useState('grid');
   const [selectedPlayer, setSelectedPlayer] = useState(null);
+  const [editingUser, setEditingUser] = useState(null);
+  const [notification, setNotification] = useState(null);
 
   const filterOptions = {
     type: [
@@ -312,29 +313,29 @@ const PlayersManagement = () => {
     ],
   };
 
-  useEffect(() => {
-    const fetchPlayers = async () => {
-      try {
-        setIsLoading(true);
-        const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/manage_users.php`
-        );
+  const fetchPlayers = async () => {
+    try {
+      setIsLoading(true);
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/manage_users.php`
+      );
 
-        if (response.data.success) {
-          console.log('Players data:', response.data.users);
-          setPlayers(response.data.users);
-          setFilteredPlayers(response.data.users);
-        } else {
-          setError(response.data.error || 'Failed to fetch players');
-        }
-      } catch (err) {
-        console.error('Error fetching players:', err);
-        setError('Error fetching players: ' + err.message);
-      } finally {
-        setIsLoading(false);
+      if (response.data.success) {
+        console.log('Players data:', response.data.users);
+        setPlayers(response.data.users);
+        setFilteredPlayers(response.data.users);
+      } else {
+        setError(response.data.error || 'Failed to fetch players');
       }
-    };
+    } catch (err) {
+      console.error('Error fetching players:', err);
+      setError('Error fetching players: ' + err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchPlayers();
   }, []);
 
@@ -353,6 +354,17 @@ const PlayersManagement = () => {
     setFilteredPlayers(filtered);
   }, [filters, players, searchTerm]);
 
+  // Clear notification after 5 seconds
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => {
+        setNotification(null);
+      }, 5000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
+
   const stats = {
     total: players.length,
     admins: players.filter(p => p.type === 'admin').length,
@@ -362,8 +374,44 @@ const PlayersManagement = () => {
 
   const handleEdit = (player) => {
     console.log('Edit player:', player);
-    // Implement edit functionality
-    window.location.href = `/admin/players/edit/${player.id}`;
+    setEditingUser(player);
+  };
+
+  const handleSaveUser = async (formData) => {
+    try {
+      console.log("editingUser:", editingUser);
+      formData.append('id', editingUser.id);
+
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/manage_users.php`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        },
+      );
+
+      if (response.data.success) {
+        await fetchPlayers();
+        setEditingUser(null);
+        setNotification({
+          type: 'success',
+          message: 'Utilisateur mis à jour avec succès',
+        });
+      } else {
+        setNotification({
+          type: 'error',
+          message: response.data.error || 'Échec de la mise à jour de l\'utilisateur',
+        });
+      }
+    } catch (err) {
+      setNotification({
+        type: 'error',
+        message: 'Erreur lors de la mise à jour de l\'utilisateur. Veuillez réessayer plus tard.',
+      });
+      console.error('Error updating user:', err);
+    }
   };
 
   const handleDelete = async (player) => {
@@ -379,14 +427,23 @@ const PlayersManagement = () => {
       );
 
       if (response.data && response.data.success) {
-        setPlayers(players.filter(p => p.id !== player.id));
-        alert('Joueur supprimé avec succès');
+        await fetchPlayers();
+        setNotification({
+          type: 'success',
+          message: 'Joueur supprimé avec succès',
+        });
       } else {
-        alert('Erreur lors de la suppression');
+        setNotification({
+          type: 'error',
+          message: 'Erreur lors de la suppression',
+        });
       }
     } catch (err) {
       console.error(err);
-      alert('Erreur lors de la suppression: ' + err.message);
+      setNotification({
+        type: 'error',
+        message: 'Erreur lors de la suppression: ' + err.message,
+      });
     }
   };
 
@@ -417,6 +474,16 @@ const PlayersManagement = () => {
 
   return (
     <div className="min-h-screen bg-[#0f172a] text-white overflow-y-auto">
+      {/* Notification */}
+      {notification && (
+        <div className={`fixed top-4 right-4 z-50 px-6 py-4 rounded-lg shadow-lg ${
+          notification.type === 'success' ? 'bg-green-600' : 'bg-red-600'
+        } text-white flex items-center gap-3`}>
+          {notification.type === 'success' ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
+          <span>{notification.message}</span>
+        </div>
+      )}
+
       {/* Header */}
       <div className="bg-secondary border-b border-slate-700/50 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-6 py-6">
@@ -586,6 +653,16 @@ const PlayersManagement = () => {
           onClose={() => setSelectedPlayer(null)}
           onEdit={handleEdit}
           onDelete={handleDelete}
+        />
+      )}
+
+      {/* Edit User Modal */}
+      {editingUser && (
+        <EditUserModal
+          isOpen={!!editingUser}
+          onClose={() => setEditingUser(null)}
+          user={editingUser}
+          onSave={handleSaveUser}
         />
       )}
     </div>

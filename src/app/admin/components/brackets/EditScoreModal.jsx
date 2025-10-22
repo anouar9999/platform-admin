@@ -86,7 +86,7 @@ const EditScoreModal = ({
           >
             {/* Header */}
             <div className="relative bg-dark px-6 py-6">
-              <h2 className="font-custom tracking-wider text-5xl text-center">
+              <h2 className="font-custom tracking-wider text-white text-5xl text-center">
                 Enter Match Score
               </h2>
               <div className="text-primary text-sm mt-1 text-center font-valorant">
@@ -115,7 +115,7 @@ const EditScoreModal = ({
                     {match.participants?.[0]?.picture && (
                       <div className="w-20 h-20 rounded-2xl overflow-hidden bg-gray-700 border border-gray-600">
                         <img
-                          src={match.participants[0].picture}
+                          src={`${process.env.NEXT_PUBLIC_BACKEND_URL}${match.participants[0].picture}`}
                           alt={match.participants[0].name}
                           className="w-full h-full object-cover"
                         />
@@ -170,7 +170,7 @@ const EditScoreModal = ({
                     {match.participants?.[1]?.picture && (
                       <div className="w-20 h-20 rounded-2xl overflow-hidden bg-gray-700 border border-gray-600">
                         <img
-                          src={match.participants[1].picture}
+                          src={`${process.env.NEXT_PUBLIC_BACKEND_URL}${match.participants[1].picture}` }
                           alt={match.participants[1].name}
                           className="w-full h-full object-cover"
                         />
@@ -209,7 +209,7 @@ const EditScoreModal = ({
 
                 <motion.button
                   onClick={handleSave}
-                  className="px-8 py-3 bg-primary hover:bg-primary/70 text-white font-medium transition-colors flex items-center justify-center"
+                  className="px-8 py-3 bg-primary hover:bg-primary/70 text-black font-medium transition-colors flex items-center justify-center"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   disabled={isUpdating}

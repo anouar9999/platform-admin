@@ -97,7 +97,7 @@ const menuSections = [
         id: 8, 
         icon: Shield, 
         name: 'Players', 
-        href: '/admin/players',
+        href: '/admin/users',
         badge: '156'
       },
       // { 

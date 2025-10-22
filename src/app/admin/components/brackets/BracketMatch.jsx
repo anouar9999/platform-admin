@@ -36,7 +36,7 @@ const BracketMatch = ({
     if (!team) return {};
     
     return {
-      backgroundImage: team.picture ? `url(${team.picture})` : 'none',
+      backgroundImage: team.picture ? `url(${process.env.NEXT_PUBLIC_BACKEND_URL}${team.picture})` : 'none',
       backgroundSize: 'cover',
       backgroundPosition: 'center',
       opacity: 0.2,
@@ -169,7 +169,7 @@ const BracketMatch = ({
                     {match.participants?.[0]?.picture && (
                       <div className="w-6 h-6 rounded-full overflow-hidden bg-gray-800 mr-2 border border-gray-700">
                         <img 
-                          src={match.participants[0].picture} 
+                          src={`${process.env.NEXT_PUBLIC_BACKEND_URL}${match.participants[0].picture}`} 
                           alt={match.participants[0].name} 
                           className="w-full h-full object-cover" 
                         />
@@ -221,7 +221,7 @@ const BracketMatch = ({
                     {match.participants?.[1]?.picture && (
                       <div className="w-6 h-6 rounded-full overflow-hidden bg-gray-800 mr-2 border border-gray-700">
                         <img 
-                          src={match.participants[1].picture}
+                          src={`${process.env.NEXT_PUBLIC_BACKEND_URL}${match.participants[1].picture}`}
                           alt={match.participants[1].name} 
                           className="w-full h-full object-cover" 
                         />

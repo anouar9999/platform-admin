@@ -54,50 +54,158 @@ const formatDate = (dateString) => {
     minute: '2-digit',
   });
 };
-const createTournament = async (formData) => {
-  console.log('=== INCOMING FORM DATA ===');
-  
-  const formDataToSend = new FormData();
 
-  // Field mapping from frontend to backend
-  const fieldMapping = {
-    name: 'nom_des_qualifications',
-    description: 'description_des_qualifications',
+const createTournament = async (formData) => {
+  console.log('=== FORM SUBMISSION STARTED ===');
+  console.log('=== ALL FORM DATA ===');
+  
+  // Helper function to format dates for MySQL
+  const formatDateForMySQL = (dateValue) => {
+    if (!dateValue) return null;
+    
+    // Handle both Date objects and ISO strings
+    const date = typeof dateValue === 'string' ? new Date(dateValue) : dateValue;
+    if (isNaN(date.getTime())) return null;
+    
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+    
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
   };
 
+  const formDataToSend = new FormData();
+
+  // Log each field for debugging
   Object.entries(formData).forEach(([key, value]) => {
     if (value instanceof File) {
-      console.log(`Processing: ${key} = [File: ${value.name}, Size: ${value.size} bytes]`);
+      console.log(`${key}: [File: ${value.name}, Size: ${value.size} bytes]`);
     } else if (value instanceof Date) {
-      console.log(`Processing: ${key} = [Date: ${value.toISOString()}]`);
+      console.log(`${key}: [Date: ${value.toISOString()}]`);
     } else {
-      console.log(`Processing: ${key} = ${value}`);
-    }
-    
-    if (value !== null && value !== '') {
-      // Use mapped field name for backend
-      const backendKey = fieldMapping[key] || key;
-      
-      if (
-        key === 'start_date' ||
-        key === 'end_date' ||
-        key === 'registration_start' ||
-        key === 'registration_end'
-      ) {
-        formDataToSend.append(backendKey, value ? value.toISOString() : '');
-      } else {
-        formDataToSend.append(backendKey, value);
-      }
+      console.log(`${key}: ${value}`);
     }
   });
 
-  // Debug: Show what's actually being sent
-  console.log('=== FORM DATA BEING SENT ===');
+  // ============================================
+  // REQUIRED FIELDS - Send BOTH field names for compatibility
+  // ============================================
+  
+  // Name field - send both 'name' and 'nom_des_qualifications'
+  const name = formData.name || '';
+  if (name) {
+    formDataToSend.append('name', name);
+    formDataToSend.append('nom_des_qualifications', name);
+  }
+  
+  // Competition type
+  if (formData.competition_type) {
+    formDataToSend.append('competition_type', formData.competition_type);
+  }
+  
+  // Max participants
+  const maxParticipants = formData.nombre_maximum || '';
+  if (maxParticipants) {
+    formDataToSend.append('nombre_maximum', maxParticipants);
+    formDataToSend.append('max_participants', maxParticipants);
+  }
+  
+  // Rules
+  if (formData.rules) {
+    formDataToSend.append('rules', formData.rules);
+  }
+
+  // ============================================
+  // FORMAT DATES
+  // ============================================
+  
+  // Start date
+  const startDate = formData.start_date;
+  if (startDate) {
+    const formatted = formatDateForMySQL(startDate);
+    if (formatted) {
+      formDataToSend.append('start_date', formatted);
+      console.log('✅ start_date formatted:', formatted);
+    }
+  }
+  
+  // End date
+  const endDate = formData.end_date;
+  if (endDate) {
+    const formatted = formatDateForMySQL(endDate);
+    if (formatted) {
+      formDataToSend.append('end_date', formatted);
+      console.log('✅ end_date formatted:', formatted);
+    }
+  }
+  
+  // Registration dates
+  if (formData.registration_start) {
+    const formatted = formatDateForMySQL(formData.registration_start);
+    if (formatted) {
+      formDataToSend.append('registration_start', formatted);
+    }
+  }
+  
+  if (formData.registration_end) {
+    const formatted = formatDateForMySQL(formData.registration_end);
+    if (formatted) {
+      formDataToSend.append('registration_end', formatted);
+    }
+  }
+
+  // Fix participation_type
+  let participationType = formData.participation_type || 'individual';
+  if (participationType === 'participant') {
+    participationType = 'individual';
+  }
+  formDataToSend.append('participation_type', participationType);
+
+  // Fix bracket_type format
+  if (formData.bracket_type) {
+    const bracketTypeMap = {
+      'single_elimination': 'Single Elimination',
+      'double_elimination': 'Double Elimination',
+      'round_robin': 'Round Robin',
+      'battle_royale': 'Battle Royale',
+      'Single Elimination': 'Single Elimination',
+      'Double Elimination': 'Double Elimination',
+      'Round Robin': 'Round Robin',
+      'Battle Royale': 'Battle Royale'
+    };
+    const mappedBracketType = bracketTypeMap[formData.bracket_type] || 'Single Elimination';
+    formDataToSend.append('format_des_qualifications', mappedBracketType);
+    formDataToSend.append('bracket_type', mappedBracketType);
+  }
+
+  // Optional fields
+  if (formData.description) {
+    formDataToSend.append('description_des_qualifications', formData.description);
+    formDataToSend.append('description', formData.description);
+  }
+  if (formData.match_format) {
+    formDataToSend.append('match_format', formData.match_format);
+  }
+  if (formData.prize_pool) {
+    formDataToSend.append('prize_pool', formData.prize_pool);
+  }
+  if (formData.stream_url) {
+    formDataToSend.append('stream_url', formData.stream_url);
+  }
+  if (formData.image) {
+    formDataToSend.append('image', formData.image);
+  }
+
+  // Debug: Show what's being sent to API
+  console.log('=== DATA BEING SENT TO API ===');
   for (let [key, value] of formDataToSend.entries()) {
     if (value instanceof File) {
-      console.log(`${key}: [File: ${value.name}]`);
+      console.log(`✅ ${key}: [File: ${value.name}]`);
     } else {
-      console.log(`${key}: ${value}`);
+      console.log(`✅ ${key}: ${value}`);
     }
   }
 
@@ -129,28 +237,9 @@ const TournamentCreationSteps = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { setshowGlow } = useContext(GlowEffectContext);
 
-  const [tournamentDateRange, setTournamentDateRange] = useState({
-    startDate: null,
-    endDate: null,
-  });
-  const [registrationDateRange, setRegistrationDateRange] = useState({
-    startDate: null,
-    endDate: null,
-  });
-  const router = useRouter();
-
-const {
-  control,
-  handleSubmit,
-  watch,
-  setValue,
-  formState: { errors, isValid },
-  trigger,
-  getValues,
-} = useForm({
-  mode: 'onChange',
-  defaultValues: {
-    name: '', // ✅ Use 'name' instead of 'nom_des_qualifications'
+  // ✅ PRODUCTION FIX: Use state to persist form data across steps
+  const [formState, setFormState] = useState({
+    name: '',
     image: null,
     competition_type: '',
     match_format: '',
@@ -158,18 +247,54 @@ const {
     participation_type: 'individual',
     nombre_maximum: '',
     bracket_type: '',
-    start_date: null,
-    end_date: null,
-    registration_start: null,
-    registration_end: null,
-    description: '', // ✅ Use 'description' instead of 'description_des_qualifications'
+    start_date: '',
+    end_date: '',
+    registration_start: '',
+    registration_end: '',
+    description: '',
     prize_pool: '',
     rules: '',
     stream_url: '',
-  },
-});
+  });
 
+  const router = useRouter();
+
+  const {
+    control,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors, isValid },
+    trigger,
+    getValues,
+  } = useForm({
+    mode: 'onChange',
+    shouldUnregister: false,
+    defaultValues: formState,
+  });
+  
   const watchedFields = watch();
+
+  // ✅ PRODUCTION FIX: Sync form values to state on every change
+  useEffect(() => {
+    const subscription = watch((value) => {
+      setFormState(prev => ({
+        ...prev,
+        ...value
+      }));
+    });
+    return () => subscription.unsubscribe();
+  }, [watch]);
+
+  // ✅ PRODUCTION FIX: Restore form values when component mounts or step changes
+  useEffect(() => {
+    Object.entries(formState).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        setValue(key, value);
+      }
+    });
+  }, [currentStep, setValue]);
+  
   const selectedGame = watchedFields.competition_type;
   const participationType = watchedFields.participation_type;
   
@@ -186,71 +311,66 @@ const {
   });
   
   const nextStep = async (e) => {
-  if (e) {
-    e.preventDefault();
-    e.stopPropagation();
-  }
-
-  const fieldsToValidate = getFieldsForStep(currentStep);
-  const isStepValid = await trigger(fieldsToValidate);
-
-  // Log current values for debugging
-  const currentValues = getValues();
-  console.log('Current step values:', currentValues);
-
-  if (isStepValid && currentStep < steps.length) {
-    setCurrentStep(currentStep + 1);
-  }
-};
-  
-  useEffect(() => {
-    if (watchedFields.start_date || watchedFields.end_date) {
-      setTournamentDateRange({
-        startDate: watchedFields.start_date,
-        endDate: watchedFields.end_date,
-      });
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
     }
-  }, [watchedFields.start_date, watchedFields.end_date]);
 
-  useEffect(() => {
-    if (watchedFields.registration_start || watchedFields.registration_end) {
-      setRegistrationDateRange({
-        startDate: watchedFields.registration_start,
-        endDate: watchedFields.registration_end,
-      });
+    const fieldsToValidate = getFieldsForStep(currentStep);
+    const isStepValid = await trigger(fieldsToValidate);
+
+    // ✅ PRODUCTION FIX: Save current values before moving to next step
+    const currentValues = getValues();
+    setFormState(prev => ({
+      ...prev,
+      ...currentValues
+    }));
+    
+    console.log('Current step values:', currentValues);
+    console.log('Validated fields:', fieldsToValidate);
+    console.log('Are they valid?', isStepValid);
+
+    if (isStepValid && currentStep < steps.length) {
+      setCurrentStep(currentStep + 1);
     }
-  }, [watchedFields.registration_start, watchedFields.registration_end]);
+  };
 
   const prevStep = () => {
     if (currentStep > 1) {
+      // Save current values before going back
+      const currentValues = getValues();
+      setFormState(prev => ({
+        ...prev,
+        ...currentValues
+      }));
       setCurrentStep(currentStep - 1);
     }
   };
   
- const getFieldsForStep = (step) => {
-  switch (step) {
-    case 1:
-      return ['nom_des_qualifications']; // ✅ Changed from 'name'
-    case 2:
-      return ['image'];
-    case 3:
-      return ['competition_type'];
-    case 4:
-      return ['rules'];
-    case 5:
-      return ['start_date', 'registration_start'];
-    case 6:
-      return ['prize_pool'];
-    case 7:
-      return ['bracket_type'];
-    case 8:
-      return ['match_format', 'type_de_jeu', 'nombre_maximum'];
-    case 9:
-      return ['stream_url'];
-    default:
-      return [];
-  }
-};
+  const getFieldsForStep = (step) => {
+    switch (step) {
+      case 1:
+        return ['name'];
+      case 2:
+        return ['image'];
+      case 3:
+        return ['competition_type'];
+      case 4:
+        return ['participation_type', 'nombre_maximum'];
+      case 5:
+        return ['start_date', 'end_date', 'registration_start', 'registration_end'];
+      case 6:
+        return ['description', 'prize_pool', 'rules'];
+      case 7:
+        return ['bracket_type'];
+      case 8:
+        return ['match_format'];
+      case 9:
+        return ['stream_url'];
+      default:
+        return [];
+    }
+  };
   
   const mockGames = [
     {
@@ -303,58 +423,69 @@ const {
     },
   ];
   
-const onSubmit = async (data) => {
-  console.log('=== FORM SUBMISSION STARTED ===');
-  console.log('=== ALL FORM DATA ===');
-  
-  // Log all fields
-  Object.keys(data).forEach(key => {
-    const value = data[key];
-    if (value instanceof File) {
-      console.log(`${key}: [File: ${value.name}]`);
-    } else if (value instanceof Date) {
-      console.log(`${key}: [Date: ${value.toISOString()}]`);
-    } else {
-      console.log(`${key}: ${value}`);
-    }
-  });
-  
-  // ✅ FIX: Match the actual form field names
-  const requiredValidation = {
-    name: 'Nom du tournoi', // ✅ Changed to match form field
-    start_date: 'Date de début',
-    rules: 'Règles',
-    competition_type: 'Type de jeu',
-    nombre_maximum: 'Nombre de participants'
-  };
-  
-  const missing = [];
-  Object.entries(requiredValidation).forEach(([field, label]) => {
-    if (!data[field] || data[field] === '') {
-      missing.push(label);
-      console.error(`❌ Missing: ${field}`);
-    } else {
-      const value = data[field] instanceof File 
-        ? `[File: ${data[field].name}]` 
-        : data[field] instanceof Date
-        ? data[field].toISOString()
-        : data[field];
-      console.log(`✅ Present: ${field} = ${value}`);
-    }
-  });
-  
-  if (missing.length > 0) {
-    alert(`Champs requis manquants: ${missing.join(', ')}`);
-    return;
-  }
+  const onSubmit = async (data) => {
+    console.log('=== FORM SUBMISSION STARTED ===');
+    console.log('All form data (raw):', data);
+    console.log('All form state:', formState);
 
-  mutation.mutate(data);
-};
+    // ✅ PRODUCTION FIX: Merge form data with formState to ensure all values are present
+    const mergedData = {
+      ...formState,
+      ...data
+    };
+
+    console.log('Merged data:', mergedData);
+
+    // Check for required fields with proper validation
+    const requiredFields = [
+      { key: 'name', label: 'Nom du tournoi' },
+      { key: 'competition_type', label: 'Type de jeu' },
+      { key: 'nombre_maximum', label: 'Nombre maximum de participants' },
+      { key: 'start_date', label: 'Date de début' },
+      { key: 'end_date', label: 'Date de fin' },
+      { key: 'rules', label: 'Règles du tournoi' }
+    ];
+    
+    const missingFields = [];
+
+    requiredFields.forEach(({ key, label }) => {
+      const value = mergedData[key];
+      if (value === null || value === undefined || value === '') {
+        console.error(`❌ Missing: ${key}`);
+        missingFields.push(label);
+      } else {
+        console.log(`✅ Present: ${key} =`, value);
+      }
+    });
+
+    if (missingFields.length > 0) {
+      alert(`Champs obligatoires manquants:\n\n${missingFields.join('\n')}\n\nVeuillez remplir tous les champs requis.`);
+      return;
+    }
+
+    // ✅ PRODUCTION FIX: Convert date strings to Date objects if needed
+    if (mergedData.start_date && typeof mergedData.start_date === 'string') {
+      mergedData.start_date = new Date(mergedData.start_date);
+    }
+    if (mergedData.end_date && typeof mergedData.end_date === 'string') {
+      mergedData.end_date = new Date(mergedData.end_date);
+    }
+    if (mergedData.registration_start && typeof mergedData.registration_start === 'string') {
+      mergedData.registration_start = new Date(mergedData.registration_start);
+    }
+    if (mergedData.registration_end && typeof mergedData.registration_end === 'string') {
+      mergedData.registration_end = new Date(mergedData.registration_end);
+    }
+
+    // Submit the merged data
+    mutation.mutate(mergedData);
+  };
 
   const formatDateForInput = (dateValue) => {
     if (!dateValue) return '';
     try {
-      const date = new Date(dateValue);
+      // Handle both Date objects and ISO strings
+      const date = typeof dateValue === 'string' ? new Date(dateValue) : dateValue;
       if (isNaN(date.getTime())) return '';
       return date.toISOString().slice(0, 16);
     } catch (error) {
@@ -368,7 +499,8 @@ const onSubmit = async (data) => {
     try {
       const date = new Date(inputValue);
       if (isNaN(date.getTime())) return null;
-      return date;
+      // ✅ PRODUCTION FIX: Return ISO string instead of Date object for better serialization
+      return date.toISOString();
     } catch (error) {
       console.warn('Invalid input date:', inputValue);
       return null;
@@ -378,138 +510,134 @@ const onSubmit = async (data) => {
   const renderStep = () => {
     switch (currentStep) {
       case 1:
-  return (
-    <div className="space-y-8">
-      <div className="* space-x-3 mb-16">
-        <h3 className="text-3xl text-white font-custom tracking-wider">
-          Let s start with Basic Information
-        </h3>
-        <p className="text-gray-400 text-sm">
-          Choisissez un nom accrocheur pour votre tournoi
-        </p>
-      </div>
+        return (
+          <div className="space-y-6">
+            <div className="text-center mb-8">
+              <Trophy className="w-16 h-16 mx-auto text-blue-400 mb-4" />
+              <h2 className="text-2xl font-bold mb-2">Nom du Tournoi</h2>
+              <p className="text-gray-400">Choisissez un nom accrocheur</p>
+            </div>
 
-      <Controller
-  name="name" // ✅ Changed from "nom_des_qualifications"
-        control={control}
-        rules={{
-          required: 'Le nom du tournoi est requis',
-          minLength: { value: 3, message: 'Le nom doit contenir au moins 3 caractères' },
-        }}
-        render={({ field }) => (
-          <div>
-            <FloatingLabelInput
-              {...field}
-              type="text"
-              label="Nom du Tournoi"
-              className={`w-full bg-gray-800 text-white rounded-xl px-6 py-4 text-lg
-                  focus:outline-none focus:ring-2 transition-all duration-300
-                  ${
-                    errors.nom_des_qualifications // ✅ Changed from errors.name
-                      ? 'focus:ring-red-500 border border-red-500'
-                      : 'focus:ring-blue-500'
-                  }`}
-              placeholder="Entrez le nom de votre tournoi"
+            <Controller
+              name="name"
+              control={control}
+              rules={{ 
+                required: 'Le nom du tournoi est obligatoire',
+                minLength: { value: 3, message: 'Minimum 3 caractères' }
+              }}
+              render={({ field }) => {
+                console.log('Step 1 - name field value:', field.value);
+                return (
+                  <div className="relative">
+                    <input
+                      {...field}
+                      type="text"
+                      placeholder="Entrez le nom du tournoi"
+                      className="w-full bg-[#21324F]/80 backdrop-blur-sm text-white border border-[#21324F]/60 
+                        rounded-2xl px-4 py-4 text-lg transition-all duration-300
+                        hover:bg-[#21324F] hover:border-blue-400/50
+                        focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50"
+                    />
+                    {errors.name && (
+                      <div className="mt-2 flex items-center text-red-400 text-sm">
+                        <AlertCircle className="w-4 h-4 mr-1" />
+                        {errors.name.message}
+                      </div>
+                    )}
+                  </div>
+                );
+              }}
             />
-            {errors.nom_des_qualifications && ( // ✅ Changed from errors.name
-              <p className="text-red-500 text-sm mt-2 flex items-center">
-                <AlertCircle className="w-4 h-4 mr-1" />
-                {errors.nom_des_qualifications.message} {/* ✅ Changed */}
-              </p>
-            )}
-           
           </div>
-        )}
-      />
-    </div>
-  );
-case 2:
-  return (
-    <div className="space-y-6">
-      <div className="space-x-3 mb-16">
-        <h3 className="text-3xl text-white font-custom tracking-wider">
-          Tournament Image
-        </h3>
-        <p className="text-gray-400 text-sm">
-          Ajoutez une image pour votre tournoi
-        </p>
-      </div>
+        );
 
-      <Controller
-        name="image"
-        control={control}
-        rules={{ required: 'Une image est requise pour le tournoi' }}
-        render={({ field: { onChange, value, ...field } }) => (
-          <div className="space-y-4">
-            <div className="relative font-ea-football">
-              <div className="space-y-4">
-                <div className="border-2 border-dashed border-gray-600 rounded-xl p-12 text-center bg-gray-800/50 hover:border-gray-500 hover:bg-gray-800/70 transition-all duration-200 cursor-pointer relative">
-                  <input
-                    {...field}
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files[0];
-                      if (file) {
-                        if (file.size > 5 * 1024 * 1024) {
-                          alert("L'image ne doit pas dépasser 5MB");
-                          return;
-                        }
+      case 2:
+        return (
+          <div className="space-y-6">
+            <div className="space-x-3 mb-16">
+              <h3 className="text-3xl text-white font-custom tracking-wider">
+                Tournament Image
+              </h3>
+              <p className="text-gray-400 text-sm">
+                Ajoutez une image pour votre tournoi
+              </p>
+            </div>
 
-                        const reader = new FileReader();
-                        reader.onloadend = () => setImagePreview(reader.result);
-                        reader.readAsDataURL(file);
+            <Controller
+              name="image"
+              control={control}
+              rules={{ required: 'Une image est requise pour le tournoi' }}
+              render={({ field: { onChange, value, ...field } }) => (
+                <div className="space-y-4">
+                  <div className="relative font-ea-football">
+                    <div className="space-y-4">
+                      <div className="border-2 border-dashed border-gray-600 rounded-xl p-12 text-center bg-gray-800/50 hover:border-gray-500 hover:bg-gray-800/70 transition-all duration-200 cursor-pointer relative">
+                        <input
+                          {...field}
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files[0];
+                            if (file) {
+                              if (file.size > 5 * 1024 * 1024) {
+                                alert("L'image ne doit pas dépasser 5MB");
+                                return;
+                              }
 
-                        onChange(file);
-                      }
-                    }}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  />
+                              const reader = new FileReader();
+                              reader.onloadend = () => setImagePreview(reader.result);
+                              reader.readAsDataURL(file);
 
-                  <div className="space-y-4">
-                    {!value && (
-                      <div className="mx-auto w-12 h-12 bg-gray-700 rounded-lg flex items-center justify-center border border-gray-600">
-                        <Upload className="w-6 h-6 text-gray-400" />
-                      </div>
-                    )}
-                    {imagePreview && (
-                      <div className="flex justify-center">
-                        <img
-                          src={imagePreview}
-                          alt="Preview"
-                          className="h-32 w-fit object-cover rounded-xl border-2 border-gray-700"
+                              onChange(file);
+                              // ✅ PRODUCTION FIX: Save file to formState as well
+                              setFormState(prev => ({ ...prev, image: file }));
+                            }
+                          }}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                         />
+
+                        <div className="space-y-4">
+                          {!value && (
+                            <div className="mx-auto w-12 h-12 bg-gray-700 rounded-lg flex items-center justify-center border border-gray-600">
+                              <Upload className="w-6 h-6 text-gray-400" />
+                            </div>
+                          )}
+                          {imagePreview && (
+                            <div className="flex justify-center">
+                              <img
+                                src={imagePreview}
+                                alt="Preview"
+                                className="h-32 w-fit object-cover rounded-xl border-2 border-gray-700"
+                              />
+                            </div>
+                          )}
+                          <div>
+                            <p className="text-white text-base mb-1 ">
+                              <span className="text-[#03C7FD] font-medium underline cursor-pointer">
+                                Click to upload
+                              </span>{' '}
+                              or drag and drop
+                            </p>
+                            <p className="text-gray-400 text-sm">
+                              Upload images (MAX. file size 5MB)
+                            </p>
+                          </div>
+                        </div>
                       </div>
-                    )}
-                    <div>
-                      <p className="text-white text-base mb-1 ">
-                        <span className="text-[#03C7FD] font-medium underline cursor-pointer">
-                          Click to upload
-                        </span>{' '}
-                        or drag and drop
-                      </p>
-                      <p className="text-gray-400 text-sm">
-                        Upload images (MAX. file size 5MB)
-                      </p>
                     </div>
+
+                    {errors.image && (
+                      <p className="text-red-500 text-sm mt-2 flex items-center">
+                        <AlertCircle className="w-4 h-4 mr-1" />
+                        {errors.image.message}
+                      </p>
+                    )}
                   </div>
                 </div>
-              </div>
-
-              {errors.image && (
-                <p className="text-red-500 text-sm mt-2 flex items-center">
-                  <AlertCircle className="w-4 h-4 mr-1" />
-                  {errors.image.message}
-                </p>
               )}
-              
-            
-            </div>
+            />
           </div>
-        )}
-      />
-    </div>
-  );
+        );
     
       case 3:
         return (
@@ -538,6 +666,7 @@ case 2:
                             onClick={() => {
                               setTimeout(() => {
                                 field.onChange(game.name);
+                                setFormState(prev => ({ ...prev, competition_type: game.name }));
                               }, 300);
                             }}
                             className={`relative p-4 h-28 rounded-lg  cursor-pointer transition-all duration-500 overflow-hidden transform hover:scale-105 border-gray-700 hover:border-gray-600 opacity-100 hover:opacity-90`}
@@ -595,7 +724,6 @@ case 2:
                         {errors.competition_type.message}
                       </p>
                     )}
-                   
                   </div>
                 )}
               />
@@ -633,32 +761,40 @@ case 2:
             </div>
 
             <div className="grid grid-cols-1 gap-6">
-              <Controller
-                name="rules"
-                control={control}
-                rules={{ required: 'Règles du tournoi requises' }}
-                render={({ field }) => (
-                  <div>
-                    <FloatingLabelTextarea
-                      label={'Regles du Tournoi'}
-                      {...field}
-                      className={`w-full bg-gray-800 text-white rounded-xl px-4 py-3
-                          focus:outline-none focus:ring-2 transition-all duration-300
-                          ${
-                            errors.rules
-                              ? 'focus:ring-red-500 border border-red-500'
-                              : 'focus:ring-blue-500'
-                          }`}
-                      rows={7}
-                      placeholder="Définissez les règles du tournoi..."
-                    />
-                    {errors.rules && (
-                      <p className="text-red-500 text-sm mt-2">{errors.rules.message}</p>
-                    )}
-                  
-                  </div>
-                )}
-              />
+              {/* Rules Field - REQUIRED */}
+              <div className="mb-6">
+                <Controller
+                  name="rules"
+                  control={control}
+                  rules={{ 
+                    required: 'Les règles du tournoi sont obligatoires',
+                    minLength: { value: 10, message: 'Les règles doivent contenir au moins 10 caractères' }
+                  }}
+                  render={({ field }) => (
+                    <div className="relative">
+                      <label className="block text-sm font-medium mb-2 text-gray-300">
+                        Règles du Tournoi *
+                      </label>
+                      <textarea
+                        {...field}
+                        rows="6"
+                        placeholder="Décrivez les règles et règlements du tournoi..."
+                        className={`w-full bg-[#21324F]/80 backdrop-blur-sm text-white border rounded-2xl px-4 py-4 
+                          transition-all duration-300 resize-none
+                          hover:bg-[#21324F] hover:border-blue-400/50
+                          focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50
+                          ${errors.rules ? 'border-red-500/70' : 'border-[#21324F]/60'}`}
+                      />
+                      {errors.rules && (
+                        <div className="absolute -bottom-6 left-0 flex items-center text-red-400 text-sm">
+                          <AlertCircle className="w-4 h-4 mr-1" />
+                          {errors.rules.message}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                />
+              </div>
             </div>
           </div>
         );
@@ -674,96 +810,146 @@ case 2:
             </div>
 
             <div className="grid grid-cols-1 gap-6">
+              {/* Start Date Field - REQUIRED */}
               <Controller
                 name="start_date"
                 control={control}
-                rules={{ required: 'La date de début est requise' }}
-                render={({ field }) => (
-                  <div>
-                    <label className="block text-sm font-medium mb-2 text-gray-300">
-                      Date de début du tournoi <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      {...field}
-                      type="datetime-local"
-                      value={formatDateForInput(field.value)}
-                      onChange={(e) => field.onChange(parseDateFromInput(e.target.value))}
-                      className="w-full bg-gray-800 text-white border border-gray-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                    {errors.start_date && (
-                      <p className="text-red-500 text-sm mt-2 flex items-center">
-                        <AlertCircle className="w-4 h-4 mr-1" />
-                        {errors.start_date.message}
-                      </p>
-                    )}
-        
-                  </div>
-                )}
+                rules={{ required: 'La date de début est obligatoire' }}
+                render={({ field: { ref, value, onChange, onBlur } }) => {
+                  console.log('Step 5 - start_date field value:', value);
+                  return (
+                    <div className="relative">
+                      <label className="block text-sm font-medium mb-2 text-gray-300">
+                        Date de début du tournoi *
+                      </label>
+                      <input
+                        ref={ref}
+                        name="start_date"
+                        type="datetime-local"
+                        value={formatDateForInput(value)}
+                        onChange={(e) => {
+                          const isoString = parseDateFromInput(e.target.value);
+                          console.log('Start date changed to:', isoString);
+                          onChange(isoString);
+                          setFormState(prev => ({ ...prev, start_date: isoString }));
+                        }}
+                        onBlur={onBlur}
+                        className="w-full bg-[#21324F]/80 backdrop-blur-sm text-white border border-[#21324F]/60 
+                          rounded-2xl px-4 py-4 transition-all duration-300
+                          hover:bg-[#21324F] hover:border-blue-400/50
+                          focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50"
+                      />
+                      {errors.start_date && (
+                        <div className="mt-2 flex items-center text-red-400 text-sm">
+                          <AlertCircle className="w-4 h-4 mr-1" />
+                          {errors.start_date.message}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }}
               />
 
+              {/* End Date Field */}
               <Controller
                 name="end_date"
                 control={control}
-                render={({ field }) => (
-                  <div>
+                rules={{ required: 'La date de fin est obligatoire' }}
+                render={({ field: { ref, value, onChange, onBlur } }) => (
+                  <div className="relative">
                     <label className="block text-sm font-medium mb-2 text-gray-300">
-                      Date de fin du tournoi
+                      Date de fin du tournoi *
                     </label>
                     <input
-                      {...field}
+                      ref={ref}
+                      name="end_date"
                       type="datetime-local"
-                      value={formatDateForInput(field.value)}
-                      onChange={(e) => field.onChange(parseDateFromInput(e.target.value))}
+                      value={formatDateForInput(value)}
+                      onChange={(e) => {
+                        const isoString = parseDateFromInput(e.target.value);
+                        onChange(isoString);
+                        setFormState(prev => ({ ...prev, end_date: isoString }));
+                      }}
+                      onBlur={onBlur}
                       min={formatDateForInput(watchedFields.start_date)}
-                      className="w-full bg-gray-800 text-white border border-gray-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full bg-[#21324F]/80 backdrop-blur-sm text-white border border-[#21324F]/60 
+                        rounded-2xl px-4 py-4 transition-all duration-300
+                        hover:bg-[#21324F] hover:border-blue-400/50
+                        focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50"
                     />
+                    {errors.end_date && (
+                      <div className="mt-2 flex items-center text-red-400 text-sm">
+                        <AlertCircle className="w-4 h-4 mr-1" />
+                        {errors.end_date.message}
+                      </div>
+                    )}
                   </div>
                 )}
               />
 
+              {/* Registration Start */}
               <Controller
                 name="registration_start"
                 control={control}
                 rules={{ required: "La date d'ouverture des inscriptions est requise" }}
-                render={({ field }) => (
-                  <div>
+                render={({ field: { ref, value, onChange, onBlur } }) => (
+                  <div className="relative">
                     <label className="block text-sm font-medium mb-2 text-gray-300">
                       Ouverture des inscriptions <span className="text-red-500">*</span>
                     </label>
                     <input
-                      {...field}
+                      ref={ref}
+                      name="registration_start"
                       type="datetime-local"
-                      value={formatDateForInput(field.value)}
-                      onChange={(e) => field.onChange(parseDateFromInput(e.target.value))}
+                      value={formatDateForInput(value)}
+                      onChange={(e) => {
+                        const isoString = parseDateFromInput(e.target.value);
+                        onChange(isoString);
+                        setFormState(prev => ({ ...prev, registration_start: isoString }));
+                      }}
+                      onBlur={onBlur}
                       max={formatDateForInput(watchedFields.start_date)}
-                      className="w-full bg-gray-800 text-white border border-gray-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      className="w-full bg-[#21324F]/80 backdrop-blur-sm text-white border border-[#21324F]/60 
+                        rounded-2xl px-4 py-4 transition-all duration-300
+                        hover:bg-[#21324F] hover:border-blue-400/50
+                        focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50"
                     />
                     {errors.registration_start && (
-                      <p className="text-red-500 text-sm mt-2 flex items-center">
+                      <div className="mt-2 flex items-center text-red-400 text-sm">
                         <AlertCircle className="w-4 h-4 mr-1" />
                         {errors.registration_start.message}
-                      </p>
+                      </div>
                     )}
                   </div>
                 )}
               />
 
+              {/* Registration End */}
               <Controller
                 name="registration_end"
                 control={control}
-                render={({ field }) => (
+                render={({ field: { ref, value, onChange, onBlur } }) => (
                   <div>
                     <label className="block text-sm font-medium mb-2 text-gray-300">
                       Fermeture des inscriptions
                     </label>
                     <input
-                      {...field}
+                      ref={ref}
+                      name="registration_end"
                       type="datetime-local"
-                      value={formatDateForInput(field.value)}
-                      onChange={(e) => field.onChange(parseDateFromInput(e.target.value))}
+                      value={formatDateForInput(value)}
+                      onChange={(e) => {
+                        const isoString = parseDateFromInput(e.target.value);
+                        onChange(isoString);
+                        setFormState(prev => ({ ...prev, registration_end: isoString }));
+                      }}
+                      onBlur={onBlur}
                       min={formatDateForInput(watchedFields.registration_start)}
                       max={formatDateForInput(watchedFields.start_date)}
-                      className="w-full bg-gray-800 text-white border border-gray-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      className="w-full bg-[#21324F]/80 backdrop-blur-sm text-white border border-[#21324F]/60 
+                        rounded-2xl px-4 py-4 transition-all duration-300
+                        hover:bg-[#21324F] hover:border-blue-400/50
+                        focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50"
                     />
                   </div>
                 )}
@@ -836,7 +1022,6 @@ case 2:
                         </p>
                       </div>
                     )}
-             
                   </div>
                 )}
               />
@@ -875,7 +1060,6 @@ case 2:
                             {errors.bracket_type.message}
                           </div>
                         )}
-                      
                       </div>
                     )}
                   />
@@ -1003,7 +1187,6 @@ case 2:
                                 {errors.nombre_maximum.message}
                               </div>
                             )}
-                          
                           </div>
                         )}
                       />
@@ -1183,19 +1366,22 @@ case 2:
                 <ChevronRight className="w-5 h-5 ml-2" />
               </button>
             ) : (
-              <button
-                type="submit"
-                disabled={mutation.isPending}
-                className="flex items-center px-8 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all duration-300 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Trophy className="w-5 h-5 mr-2" />
-                {mutation.isPending ? 'Création...' : 'Créer le Tournoi'}
-              </button>
+              <div className="flex gap-4">
+                {/* Debug button */}
+               
+
+                <button
+                  type="submit"
+                  disabled={mutation.isPending}
+                  className="flex items-center px-8 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all duration-300 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Trophy className="w-5 h-5 mr-2" />
+                  {mutation.isPending ? 'Création...' : 'Créer le Tournoi'}
+                </button>
+              </div>
             )}
           </div>
         </form>
-
-       
       </div>
     </div>
   );

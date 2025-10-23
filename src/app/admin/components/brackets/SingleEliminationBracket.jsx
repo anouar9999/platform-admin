@@ -330,6 +330,7 @@ const SingleEliminationBracket = ({ tournamentId, onSaveResult, isEditable = tru
 
     console.log('Matches received:', matches);
     console.log('Bracket info:', bracketInfo);
+    
 
     if (!matches || matches.length === 0) {
       throw new Error('No matches found for this tournament. Please generate matches first.');
@@ -384,77 +385,146 @@ const SingleEliminationBracket = ({ tournamentId, onSaveResult, isEditable = tru
 
   // Handle saving match result
   const handleSaveResult = async (matchId, score1, score2) => {
-    setIsUpdating(true);
-    setEditMatchId(matchId);
+    if (tournamentId === 20) {
+      // Mock save for tournament 20
+      setIsUpdating(true);
+      setEditMatchId(matchId);
 
-    try {
-      // Find the match in mockMatches
-      const matchIndex = mockMatches.findIndex((m) => m.id === matchId);
-      if (matchIndex === -1) {
-        throw new Error('Match not found');
-      }
+      try {
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 500));
 
-      const match = mockMatches[matchIndex];
-      const updatedMatches = [...mockMatches];
+        // Update mock data
+        const updatedMatches = mockMatches.map(match => {
+          if (match.id === matchId) {
+            const winner = score1 > score2 ? 0 : 1;
+            return {
+              ...match,
+              score1,
+              score2,
+              status: 'COMPLETED',
+              teams: match.teams.map((team, idx) => ({
+                ...team,
+                score: idx === 0 ? score1 : score2,
+                winner: idx === winner
+              }))
+            };
+          }
+          return match;
+        });
 
-      // Update the current match
-      updatedMatches[matchIndex] = {
-        ...match,
-        score1,
-        score2,
-        status: 'COMPLETED',
-        teams: match.teams.map((team, idx) => ({
-          ...team,
-          score: idx === 0 ? score1 : score2,
-          winner: idx === 0 ? score1 > score2 : score2 > score1,
-        })),
-      };
-
-      // Determine winner
-      const winnerId = score1 > score2 ? match.teams[0].id : match.teams[1].id;
-      const winnerName = score1 > score2 ? match.teams[0].name : match.teams[1].name;
-      const winnerAvatar = score1 > score2 ? match.teams[0].avatar : match.teams[1].avatar;
-
-      // Update next match if exists
-      if (match.nextMatchId) {
-        const nextMatchIndex = updatedMatches.findIndex((m) => m.id === match.nextMatchId);
-        if (nextMatchIndex !== -1) {
-          const nextMatch = updatedMatches[nextMatchIndex];
-          const teamSlot = Math.floor((matchIndex - (match.round === 1 ? 0 : 16)) / 2) % 2;
+        // Update next match with winner
+        const currentMatch = updatedMatches.find(m => m.id === matchId);
+        if (currentMatch && currentMatch.nextMatchId) {
+          const winner = score1 > score2 ? currentMatch.teams[0] : currentMatch.teams[1];
+          const nextMatchIndex = updatedMatches.findIndex(m => m.id === currentMatch.nextMatchId);
           
-          const newTeams = [...nextMatch.teams];
-          newTeams[teamSlot] = {
-            id: winnerId,
-            name: winnerName,
-            avatar: winnerAvatar,
-            winner: false,
-            score: 0,
-          };
-
-          updatedMatches[nextMatchIndex] = {
-            ...nextMatch,
-            teams: newTeams,
-          };
+          if (nextMatchIndex !== -1) {
+            const nextMatch = updatedMatches[nextMatchIndex];
+            // Find empty slot in next match
+            const emptySlot = nextMatch.teams.findIndex(t => t.id === null);
+            if (emptySlot !== -1) {
+              updatedMatches[nextMatchIndex] = {
+                ...nextMatch,
+                teams: nextMatch.teams.map((t, idx) => 
+                  idx === emptySlot ? { ...winner, winner: false, score: 0 } : t
+                )
+              };
+            }
+          }
         }
-      }
 
-      setMockMatches(updatedMatches);
-      const transformedData = transformApiData({
-        matches: updatedMatches,
-        bracket_info: { total_rounds: 5, tournament_id: tournamentId },
-      });
-      setTournamentData(transformedData);
-      setSelectedMatch(null);
+        setMockMatches(updatedMatches);
+        const transformedData = transformApiData({ 
+          matches: updatedMatches, 
+          bracket_info: { total_rounds: 5 } 
+        });
+        setTournamentData(transformedData);
 
-      if (onSaveResult) {
-        onSaveResult(matchId, score1, score2, null);
+        if (onSaveResult) {
+          onSaveResult(matchId, score1, score2, null);
+        }
+      } catch (err) {
+        console.error('Error saving match result:', err);
+        alert('Failed to save match result. Please try again.');
+      } finally {
+        setIsUpdating(false);
+        setEditMatchId(null);
       }
-    } catch (err) {
-      console.error('Error saving match result:', err);
-      alert('Failed to save match result. Please try again.');
-    } finally {
-      setIsUpdating(false);
-      setEditMatchId(null);
+    } else {
+      // Original API call for other tournaments
+      setIsUpdating(true);
+      setEditMatchId(matchId);
+
+      try {
+        // Find the match in mockMatches
+        const matchIndex = mockMatches.findIndex((m) => m.id === matchId);
+        if (matchIndex === -1) {
+          throw new Error('Match not found');
+        }
+
+        const match = mockMatches[matchIndex];
+        const updatedMatches = [...mockMatches];
+
+        // Update the current match
+        updatedMatches[matchIndex] = {
+          ...match,
+          score1,
+          score2,
+          status: 'COMPLETED',
+          teams: match.teams.map((team, idx) => ({
+            ...team,
+            score: idx === 0 ? score1 : score2,
+            winner: idx === 0 ? score1 > score2 : score2 > score1,
+          })),
+        };
+
+        // Determine winner
+        const winnerId = score1 > score2 ? match.teams[0].id : match.teams[1].id;
+        const winnerName = score1 > score2 ? match.teams[0].name : match.teams[1].name;
+        const winnerAvatar = score1 > score2 ? match.teams[0].avatar : match.teams[1].avatar;
+
+        // Update next match if exists
+        if (match.nextMatchId) {
+          const nextMatchIndex = updatedMatches.findIndex((m) => m.id === match.nextMatchId);
+          if (nextMatchIndex !== -1) {
+            const nextMatch = updatedMatches[nextMatchIndex];
+            const teamSlot = Math.floor((matchIndex - (match.round === 1 ? 0 : 16)) / 2) % 2;
+
+            const newTeams = [...nextMatch.teams];
+            newTeams[teamSlot] = {
+              id: winnerId,
+              name: winnerName,
+              avatar: winnerAvatar,
+              winner: false,
+              score: 0,
+            };
+
+            updatedMatches[nextMatchIndex] = {
+              ...nextMatch,
+              teams: newTeams,
+            };
+          }
+        }
+
+        setMockMatches(updatedMatches);
+        const transformedData = transformApiData({
+          matches: updatedMatches,
+          bracket_info: { total_rounds: 5, tournament_id: tournamentId },
+        });
+        setTournamentData(transformedData);
+        setSelectedMatch(null);
+
+        if (onSaveResult) {
+          onSaveResult(matchId, score1, score2, null);
+        }
+      } catch (err) {
+        console.error('Error saving match result:', err);
+        alert('Failed to save match result. Please try again.');
+      } finally {
+        setIsUpdating(false);
+        setEditMatchId(null);
+      }
     }
   };
 
@@ -527,6 +597,7 @@ const SingleEliminationBracket = ({ tournamentId, onSaveResult, isEditable = tru
       let title;
       const totalRounds = tournamentData.rounds.length;
 
+
       switch (roundIndex) {
         case 0:
           title = 'Final';
@@ -596,11 +667,20 @@ const SingleEliminationBracket = ({ tournamentId, onSaveResult, isEditable = tru
 
   return (
     <div className="w-full h-full bg-gray-900/30 rounded-lg p-4 relative">
+      {/* Mock Tournament Badge */}
+      {/* {tournamentId === 20 && (
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-purple-600 text-white px-3 py-1 rounded text-sm z-10">
+          🎮 Mock Tournament (ID: 20)
+        </div>
+      )} */}
+
       {/* Tournament Champion */}
       {champion && (
+     
         <motion.div
           className="absolute top-4 right-4 bg-gradient-to-r from-gray-900 to-gray-800 rounded-lg p-4 z-10 shadow-lg border border-yellow-500/30"
           initial={{ opacity: 0, y: -20 }}
+         
           animate={{
             opacity: 1,
             y: 0,
@@ -609,7 +689,9 @@ const SingleEliminationBracket = ({ tournamentId, onSaveResult, isEditable = tru
               '0 0 15px rgba(234, 179, 8, 0.4)',
               '0 0 5px rgba(234, 179, 8, 0.2)',
             ],
+           
           }}
+    
           transition={{
             duration: 0.5,
             boxShadow: {
@@ -627,6 +709,7 @@ const SingleEliminationBracket = ({ tournamentId, onSaveResult, isEditable = tru
               </div>
             </div>
 
+
             <div>
               <div className="text-xs uppercase tracking-wider text-yellow-500 font-semibold mb-1">
                 Tournament Champion
@@ -643,8 +726,9 @@ const SingleEliminationBracket = ({ tournamentId, onSaveResult, isEditable = tru
         </motion.div>
       )}
 
+
       {/* Reset button */}
-      {isEditable && (
+      {/* {isEditable && (
         <button
           onClick={resetBracket}
           className="absolute top-4 left-4 bg-blue-900/80 hover:bg-blue-800 text-white px-3 py-1.5 rounded flex items-center text-sm z-10"
@@ -652,7 +736,7 @@ const SingleEliminationBracket = ({ tournamentId, onSaveResult, isEditable = tru
           <FaUndo className="mr-1" />
           Reload Bracket
         </button>
-      )}
+      )} */}
 
       {/* Bracket container */}
       <div className="flex h-full overflow-auto pt-16">
@@ -699,6 +783,6 @@ const SingleEliminationBracket = ({ tournamentId, onSaveResult, isEditable = tru
       )}
     </div>
   );
-};
+}
 
 export default SingleEliminationBracket;

@@ -18,6 +18,7 @@ import {
   Target,
   ChevronDown,
   Settings,
+  Loader2,
 } from 'lucide-react';
 import FloatingLabelInput from '@/app/components/input/input';
 import FloatingLabelTextarea from '@/app/components/input/teaxtarea';
